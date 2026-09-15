@@ -49,7 +49,11 @@ Cada uma com o motivo. Nenhuma delas toca o Prompt Mãe.
 
 1. **Modelo.** O planejamento fixa `claude-sonnet-4-6`, geração anterior. O default é `claude-sonnet-5`, com `claude-opus-5` a uma env de distância.
 
-2. **`maxDuration` nas rotas do engine.** O planejamento não previu isso. A leitura leva de 12 a 25 segundos e a função serverless cortaria antes de responder, com a leitura pronta e paga do outro lado. `/api/read` declara 120 segundos. **Isso depende do plano da conta Vercel:** no Hobby o teto é 60 s, e aí o valor precisa cair pra 60 e a latência do engine vira risco real.
+2. **`maxDuration` e orçamento de tempo no engine.** O planejamento não previu isso. A leitura leva de 12 a 25 segundos e a função serverless cortaria antes de responder, com a leitura pronta e paga do outro lado.
+
+   A conta Vercel é **Hobby**, cujo teto é 60 segundos, então `/api/read` declara `maxDuration = 60`. Só isso não bastava: com dois retries são três chamadas em sequência, o que estoura 60 s. O engine passou a carregar um orçamento (`ENGINE_BUDGET_MS`, 48 s), e antes de cada retry estima pela média das chamadas anteriores se a próxima cabe. Se não couber, entrega a leitura que tem e loga. Dossiê com um deslize de estilo é melhor que tela de erro sobre uma leitura pronta e paga.
+
+   Em plano Pro, subir `maxDuration` pra 300 e `ENGINE_BUDGET_MS` junto.
 
 3. **Headers.** O brief do Agente 2 manda abrir exceção de `X-Frame-Options` na rota do dossiê por causa da VSL. Está invertido: esse header governa quem enquadra a nossa página, e o iframe da VSL dentro dela é `frame-src` no CSP. `DENY` ficou global, sem exceção.
 
@@ -95,7 +99,11 @@ As quatro regras abaixo, escritas como o planejamento pede, reprovam o dossiê e
 
 4. **Cards dos Movimentos.** Os 20 estão com `tem_card: false` e `frase_card: null`. Conforme a arte chegar, colocar o arquivo em `public/cards/{slug}.webp` em paisagem, preencher a frase oficial e virar a flag. A placa troca de layout sozinha.
 
-5. **Plano da Vercel**, por causa do `maxDuration` (item 2 acima).
+5. **Plano da Vercel.** Hobby limita a função a 60 s e aperta o orçamento do engine (desvio 2). Funciona, com a ressalva de que sob pressão de tempo o retry de estilo é abortado. Em Pro isso deixa de ser trade-off.
+
+6. **Projeto Supabase.** Decidido criar um projeto novo, separado da aplicação que já usa o conector atual, pra que a service role key do quiz não alcance os dados da outra. Passo a passo em `docs/DEPLOY.md`.
+
+7. **Repositório.** Decidido subir pro GitHub antes da Vercel, pra ter deploy a cada push e tirar o código de dentro desta máquina, que hoje é a única cópia que existe.
 
 ## Pendências do Prompt Mãe Seção 12, e onde elas já estão preparadas
 

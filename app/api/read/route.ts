@@ -15,8 +15,12 @@ export const runtime = 'nodejs';
  * antes de responder e o usuário vê a tela de erro com a leitura pronta e paga
  * do outro lado. O planejamento não previu isto e é o item que mais quebraria em
  * produção.
+ *
+ * 60 é o teto do plano Hobby da Vercel, que é o plano da conta hoje. Em Pro dá
+ * pra subir pra 300, e aí o orçamento de tempo do engine (`lib/engine/read.ts`)
+ * sobe junto pela env `ENGINE_BUDGET_MS`.
  */
-export const maxDuration = 120;
+export const maxDuration = 60;
 
 type CorpoRead = { respostas?: Partial<Respostas> };
 

@@ -27,6 +27,20 @@ const MAX_TOKENS = 8000;
 const TEMPERATURA = 0.7;
 const MAX_TENTATIVAS = 3; // 1 mais 2 retries
 
+/**
+ * Orçamento de tempo do conjunto de tentativas.
+ *
+ * A função tem `maxDuration = 60` no plano Hobby da Vercel. Três chamadas de 20
+ * segundos estouram isso, e o pior jeito de estourar é no último retry: a
+ * leitura estava pronta e válida o bastante desde a primeira passada, e o
+ * usuário recebe erro. Antes de cada retry a gente checa se dá tempo, e se não
+ * der, entrega o que tem e loga. Dossiê com um deslize de estilo é melhor que
+ * tela de erro.
+ *
+ * Em plano Pro, subir `maxDuration` e esta env juntos.
+ */
+const ORCAMENTO_MS = Number(process.env.ENGINE_BUDGET_MS ?? 48_000);
+
 export type ResultadoLeitura = {
   leitura: Leitura;
   model: string;
@@ -144,9 +158,23 @@ export async function gerarLeitura(respostas: Respostas): Promise<ResultadoLeitu
   let ultima: Leitura | null = null;
   let ultimoResultado: Resultado | null = null;
   let tentativas = 0;
+  let duracaoMedia = 0;
 
   for (let i = 0; i < MAX_TENTATIVAS; i++) {
+    const decorrido = Date.now() - comeco;
+
+    // Da segunda tentativa em diante, só segue se couber no orçamento. A
+    // estimativa é a média das chamadas anteriores, com 20% de folga.
+    if (i > 0 && decorrido + duracaoMedia * 1.2 > ORCAMENTO_MS) {
+      console.warn('[engine] orçamento de tempo esgotado, entregando o que tem', {
+        decorrido,
+        tentativas: i,
+      });
+      break;
+    }
+
     tentativas = i + 1;
+    const antes = Date.now();
 
     const msg = await anthropic().messages.create({
       model,
@@ -155,6 +183,9 @@ export async function gerarLeitura(respostas: Respostas): Promise<ResultadoLeitu
       system,
       messages: mensagens,
     });
+
+    const duracao = Date.now() - antes;
+    duracaoMedia = duracaoMedia === 0 ? duracao : (duracaoMedia + duracao) / 2;
 
     if (msg.stop_reason === 'max_tokens') {
       throw new Error('A leitura estourou o limite de tokens antes de fechar o JSON.');
