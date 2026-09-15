@@ -33,6 +33,19 @@ export const env = {
   get openaiKey() {
     return obrigatoria('OPENAI_API_KEY');
   },
+  /**
+   * Qual fornecedor gera a leitura. O default é `anthropic` porque foi contra
+   * ele que a Rodada 1 rodou; qualquer outro precisa da própria validação antes
+   * de ir pro ar, porque latência, contagem de palavras e acerto de Ato não
+   * transferem de um modelo pro outro.
+   */
+  get engineProvider() {
+    return opcional('ENGINE_PROVIDER', 'anthropic') === 'openai' ? 'openai' : 'anthropic';
+  },
+  /** Modelo da OpenAI quando `ENGINE_PROVIDER=openai`. */
+  get openaiEngineModel() {
+    return opcional('OPENAI_ENGINE_MODEL', 'gpt-5');
+  },
   get transcriptionModel() {
     return opcional('OPENAI_TRANSCRIPTION_MODEL', 'gpt-4o-transcribe');
   },

@@ -1,7 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk';
-
 import { env } from '../env';
 import { instrucaoCorrecao, montarRespostas } from './contract';
+import { provedor, type Chamada, type Esforco } from './provedor';
 import { LeituraMinimaSchema, LeituraSchema, type Leitura } from './schema';
 import {
   PERGUNTA_CHECAGEM_CENA,
@@ -40,8 +39,6 @@ const MAX_TOKENS = 32000;
  *
  * Se a Rodada 1 mostrar leitura rasa em casos reais, subir aqui é uma env.
  */
-type Esforco = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
-
 const ESFORCO = (process.env.ENGINE_EFFORT ?? 'medium') as Esforco;
 
 /**
@@ -63,9 +60,7 @@ const ESFORCO_RETRY: Esforco = 'low';
  * custa mais que lentidão, porque o caso ruim não é lento, é erro na cara do
  * usuário com a leitura pronta e paga do outro lado.
  */
-const PENSAR = (process.env.ENGINE_THINKING ?? 'adaptive') === 'disabled'
-  ? ({ type: 'disabled' } as const)
-  : ({ type: 'adaptive' } as const);
+const PENSAR = (process.env.ENGINE_THINKING ?? 'adaptive') !== 'disabled';
 
 const MAX_TENTATIVAS = 3; // 1 mais 2 retries
 
@@ -105,13 +100,6 @@ export class DesvioError extends Error {
     super(`desvio:${tipo}`);
     this.name = 'DesvioError';
   }
-}
-
-let cliente: Anthropic | null = null;
-
-function anthropic(): Anthropic {
-  if (cliente === null) cliente = new Anthropic({ apiKey: env.anthropicKey });
-  return cliente;
 }
 
 /* ------------------------------------------------------------------ */
@@ -161,13 +149,6 @@ export function extrairJson(texto: string): unknown {
   throw new Error('O JSON da resposta veio truncado.');
 }
 
-function textoDaResposta(msg: Anthropic.Message): string {
-  return msg.content
-    .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-    .map((b) => b.text)
-    .join('');
-}
-
 function tentarExtrair(bruto: string): unknown {
   try {
     return extrairJson(bruto);
@@ -190,10 +171,11 @@ function instrucaoGancho(): string {
 
 export async function gerarLeitura(respostas: Respostas): Promise<ResultadoLeitura> {
   const comeco = Date.now();
-  const model = env.anthropicModel;
+  const motor = provedor();
+  const model = `${motor.nome}:${motor.modelo}`;
   const system = systemPrompt();
 
-  const mensagens: Anthropic.MessageParam[] = [
+  const mensagens: Chamada['mensagens'] = [
     { role: 'user', content: montarRespostas(respostas) + instrucaoGancho() },
   ];
 
@@ -221,35 +203,23 @@ export async function gerarLeitura(respostas: Respostas): Promise<ResultadoLeitu
     tentativas = i + 1;
     const antes = Date.now();
 
-    /**
-     * Streaming com `finalMessage()` em vez de `create()`. O resultado é o
-     * mesmo objeto, mas a conexão fica viva durante a geração, o que evita
-     * timeout de HTTP numa chamada que leva dezenas de segundos.
-     *
-     * O `cache_control` no system é o ganho grande: o Prompt Mãe são mais de
-     * dez mil tokens idênticos em toda leitura. Em cache, essa parte da entrada
-     * custa uma fração e chega mais rápido, e o retry reaproveita o mesmo
-     * prefixo porque só a conversa cresce.
-     */
-    const msg = await anthropic()
-      .messages.stream({
-        model,
-        max_tokens: MAX_TOKENS,
-        output_config: { effort: i === 0 ? ESFORCO : ESFORCO_RETRY },
-        thinking: PENSAR,
-        system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
-        messages: mensagens,
-      })
-      .finalMessage();
+    const msg = await motor.chamar({
+      system,
+      mensagens,
+      maxTokens: MAX_TOKENS,
+      esforco: i === 0 ? ESFORCO : ESFORCO_RETRY,
+      pensar: PENSAR,
+      json: true,
+    });
 
     const duracao = Date.now() - antes;
     duracaoMedia = duracaoMedia === 0 ? duracao : (duracaoMedia + duracao) / 2;
 
-    if (msg.stop_reason === 'max_tokens') {
+    if (msg.truncou) {
       throw new Error('A leitura estourou o limite de tokens antes de fechar o JSON.');
     }
 
-    const bruto = textoDaResposta(msg);
+    const bruto = msg.texto;
     const cru = tentarExtrair(bruto);
 
     // Risco e piada saem antes da validação de estilo: o Prompt Mãe manda parar
@@ -381,15 +351,15 @@ export function heuristicaCena(texto: string): boolean | null {
  * vale mais que profundidade.
  */
 export async function checarCenaComModelo(texto: string): Promise<boolean> {
-  const msg = await anthropic().messages.create({
-    model: env.anthropicModel,
-    max_tokens: 64,
-    thinking: { type: 'disabled' },
-    output_config: { effort: 'low' },
+  const msg = await provedor().chamar({
     system: SYSTEM_CHECAGEM_CENA,
-    messages: [{ role: 'user', content: `${PERGUNTA_CHECAGEM_CENA}\n\n${texto}` }],
+    mensagens: [{ role: 'user', content: `${PERGUNTA_CHECAGEM_CENA}\n\n${texto}` }],
+    maxTokens: 64,
+    esforco: 'low',
+    pensar: false,
+    json: false,
   });
-  return /\bsim\b/i.test(textoDaResposta(msg));
+  return /\bsim\b/i.test(msg.texto);
 }
 
 export async function precisaRepescagem(texto: string): Promise<boolean> {
