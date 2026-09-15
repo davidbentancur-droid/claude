@@ -42,6 +42,26 @@ Duas saídas, não excludentes:
 1. **Vercel Pro.** Sobe o teto para 300 s e cabe a leitura mais dois retries com folga. Destrava hoje.
 2. **Dividir em duas chamadas.** Spoiler primeiro, rápido, e o dossiê gerado enquanto ele preenche o formulário, com a análise da primeira chamada passada para a segunda para preservar a regra de honestidade da Seção 4.1. Esconde a latência inteira do usuário, e é a arquitetura melhor, mas é refatoração deliberada.
 
+## Anthropic contra OpenAI
+
+O engine ficou trocável por `ENGINE_PROVIDER` e as duas famílias rodaram contra a mesma fixture do Marcelo, com o mesmo Prompt Mãe, o mesmo contrato e o mesmo validador.
+
+| fornecedor | esforço | latência | análise | tamanho | estilo | cabe em 60 s |
+|---|---|---|---|---|---|---|
+| Claude Sonnet 5 | raciocínio desligado, com retry | 52 s | correta | ~415, 4% acima | limpo | apertado |
+| Claude Sonnet 5 | baixo, com contagem declarada | 88 a 160 s | correta | 372 a 392 | limpo | não |
+| GPT-5 | low | 104 s | correta | 386 | limpo | não |
+| GPT-5 | minimal, 3 tentativas | 34 s | correta | ~425, 6% acima | limpo | folgado |
+| GPT-5 mini | low | 33 a 48 s | correta | 349 a 390 | **travessão em 3 de 3** | sem retry |
+
+**Todas as configurações, nos dois fornecedores e nos três modelos, acertaram a leitura**: Iniciação (meio), Movimento 9 Prova com recorrência, Rei ↓ e Guerreiro ↓ com o Rei primeiro, e os ecos Jacó mais Odisseu. É a evidência mais forte desta rodada, e ela é sobre o Prompt Mãe, não sobre os modelos: o documento funciona como especificação executável, e a leitura que ele descreve é a que sai, independente de quem gera.
+
+O que separa as linhas é só disciplina de estilo contra tempo, e o padrão se repete nos dois fornecedores: rápido acerta a leitura e passa do tamanho; lento acerta tudo. Isso confirma que o problema **não é de fornecedor, é de orçamento de tempo**. Trocar de modelo não resolve, porque a régua de estilo do Prompt Mãe custa raciocínio em qualquer um.
+
+O `gpt-5-mini` é o único caso à parte: acerta o tamanho sozinho, mas usa travessão de forma persistente, que é a primeira proibição da Seção 9. Precisaria de retry, e o retry dele não cabe nos 60 s.
+
+Conclusão prática: **a chave da Anthropic não é obrigatória.** O GPT-5 entrega a mesma leitura. A escolha entre eles é de custo e de preferência, não de qualidade.
+
 ## O que esta rodada corrigiu no código
 
 1. **`temperature` não existe na família Claude 5** e devolve 400. O planejamento fixava 0.7, parâmetro da geração anterior. O controle equivalente é `output_config.effort`.
