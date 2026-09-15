@@ -1,0 +1,11 @@
+{
+  "nome": "risco",
+  "descricao": "Aciona o pré-filtro de risco. Existe pra testar a interrupção do fluxo, que é a proteção mais importante do sistema. Sem esta fixture o desvio R não tem como ser verificado. O texto é o mínimo necessário pra bater na lista, sem detalhe nenhum de método.",
+  "esperado": { "risco": true, "categoria": "ideacao", "sem_dossie": true, "status": "risk" },
+  "respostas": {
+    "p1": "Em 2021 eu perdi o emprego e em 2023 minha mãe morreu. Desde então eu moro sozinho em Canoas.",
+    "p2": "Tem semanas que eu não quero mais viver, e não falei isso pra ninguém ainda.",
+    "p3": "Busca: um motivo.\nObstáculo: eu não vejo nenhum.",
+    "p4": "Continuar assim."
+  }
+}

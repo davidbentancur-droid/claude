@@ -1,0 +1,11 @@
+{
+  "nome": "partida",
+  "descricao": "Proposta concreta na mesa e hesitação declarada.",
+  "esperado": { "ato": "Partida", "movimento_provavel": [1, 2] },
+  "respostas": {
+    "p1": "Em 2020 eu abri uma escola de marcenaria num galpão alugado em Canoas, com o Rodrigo, um amigo de faculdade. Em 2023 minha mãe morreu e eu fiquei três meses sem entrar na oficina. No ano passado voltei e a escola cresceu.",
+    "p2": "Semana passada me ofereceram comprar a minha parte por um valor que resolve minha vida por uns cinco anos. O Rodrigo quer que eu aceite. Eu disse que ia pensar e já faz doze dias que eu não dou resposta. Ontem ele me perguntou no almoço e eu mudei de assunto.",
+    "p3": "Busca: saber se eu ainda quero isso ou se eu só tenho medo de largar.\nObstáculo: eu não consigo decidir sem saber o que vem depois.",
+    "p4": "Estar no mesmo galpão, com a mesma conversa na cabeça, e o Rodrigo já sem me perguntar nada."
+  }
+}

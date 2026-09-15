@@ -1,0 +1,11 @@
+{
+  "nome": "agencia-zero",
+  "descricao": "Tudo no passivo. A leitura tem que nomear isso pela gramática dele.",
+  "esperado": { "agencia_baixa": true, "arquetipo_provavel": "Rei ↓" },
+  "respostas": {
+    "p1": "Em 2019 a empresa me transferiu pra Curitiba. Em 2021 a minha ex decidiu que era melhor a gente se separar. Em 2022 fui desligado no corte e voltei pra Porto Alegre porque meu irmão disse que aqui era melhor.",
+    "p2": "Me colocaram num projeto novo em março. A liderança mudou e agora eu respondo pra outra pessoa. Em junho me disseram que eu ia ter que viajar toda semana e eu fui.",
+    "p3": "Busca: que as coisas se acalmem.\nObstáculo: nada depende de mim mesmo.",
+    "p4": "Chegar em 2028 e olhar pra trás e ver que foram sempre os outros escolhendo."
+  }
+}

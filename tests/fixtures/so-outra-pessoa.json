@@ -1,0 +1,11 @@
+{
+  "nome": "so-outra-pessoa",
+  "descricao": "Fala só da mulher, nunca dele. Ler o gesto dele dentro da história dela.",
+  "esperado": { "le_o_gesto_dele": true },
+  "respostas": {
+    "p1": "A Lú teve depressão pós parto em 2020 e foi bem difícil pra ela. Em 2022 a mãe dela adoeceu e a Lú passou seis meses indo e voltando pra Bagé. Ano passado ela largou o emprego dela.",
+    "p2": "A Lú tá querendo voltar a estudar e não sabe se faz. Ela conversou com a irmã dela em abril e ficou uns dias calada depois. A casa fica pesada quando ela fica assim.",
+    "p3": "Busca: que ela fique bem.\nObstáculo: ela não aceita ajuda.",
+    "p4": "A Lú continuar desse jeito e as crianças crescerem vendo isso."
+  }
+}

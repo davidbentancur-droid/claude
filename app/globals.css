@@ -1,0 +1,316 @@
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------ *
+ * Tokens. Planejamento Seção 5.
+ *
+ * A página é escura. O infográfico é a única placa clara, com o dualtone
+ * oficial do método por Ato. Esse contraste é o único ponto de cor da página
+ * inteira e é de propósito.
+ * ------------------------------------------------------------------ */
+
+:root {
+  --bg: #0e0c0a;
+  --bg-2: #161311;
+  --ink: #ede6d8;
+  --ink-2: #a69c8c;
+  --gold: #c9a85c;
+  --gold-2: #8c7440;
+  --line: rgba(201, 168, 92, 0.18);
+  --line-forte: rgba(201, 168, 92, 0.38);
+
+  /* Placa do infográfico, paleta literal do Prompt Mãe Seção 7. */
+  --paper: #f2e8d5;
+  --paper-ink: #1e1b18;
+  --partida-a: #a8836b;
+  --partida-b: #7e9bb8;
+  --iniciacao-a: #a899c4;
+  --iniciacao-b: #bfc08c;
+  --retorno-a: #d8c27a;
+  --retorno-b: #97b392;
+
+  --leitura: 640px;
+}
+
+@theme inline {
+  --font-display: var(--fonte-display);
+  --font-voice: var(--fonte-voice);
+  --font-body: var(--fonte-body);
+  --color-bg: var(--bg);
+  --color-bg-2: var(--bg-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-gold: var(--gold);
+  --color-gold-2: var(--gold-2);
+}
+
+/* Fundo escuro fixo. A marca não tem versão clara. */
+html {
+  color-scheme: dark;
+  background: var(--bg);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--fonte-body), system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+  min-height: 100svh;
+}
+
+/* Cantos retos em tudo. Padrão da marca. */
+*,
+*::before,
+*::after {
+  border-radius: 0;
+  box-sizing: border-box;
+}
+
+::selection {
+  background: var(--gold);
+  color: var(--bg);
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------ *
+ * Tipografia
+ * ------------------------------------------------------------------ */
+
+.display {
+  font-family: var(--fonte-display), Georgia, serif;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.pergunta {
+  font-size: clamp(1.875rem, 1.35rem + 2.2vw, 2.5rem);
+}
+
+.titulo-dossie {
+  font-size: clamp(2rem, 1.4rem + 2.6vw, 2.75rem);
+  color: var(--gold);
+}
+
+.subtitulo {
+  font-family: var(--fonte-voice), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1.3125rem, 1.1rem + 0.9vw, 1.5rem);
+  line-height: 1.25;
+  color: var(--ink);
+  margin: 0;
+}
+
+.corpo {
+  font-size: clamp(1.0625rem, 1.02rem + 0.2vw, 1.125rem);
+  line-height: 1.65;
+}
+
+.micro {
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+.conta {
+  font-size: 0.8125rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+
+/*
+ * As palavras dele. Único destaque tipográfico do dossiê, e ele carrega
+ * significado, então não leva mais nada junto: sem fundo, sem borda, sem peso.
+ */
+q.dele {
+  font-family: var(--fonte-voice), Georgia, serif;
+  font-style: italic;
+  color: var(--gold);
+  quotes: '"' '"';
+}
+
+/* ------------------------------------------------------------------ *
+ * Componentes
+ * ------------------------------------------------------------------ */
+
+.botao {
+  font-family: var(--fonte-body), system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1;
+  padding: 1rem 1.75rem;
+  border: 0;
+  background: var(--gold);
+  color: var(--bg);
+  cursor: pointer;
+  transition: background 140ms linear;
+}
+
+.botao:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--gold) 92%, #000);
+}
+
+.botao:disabled {
+  background: var(--gold-2);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.botao-vazado {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line-forte);
+}
+
+.botao-vazado:hover:not(:disabled) {
+  background: var(--bg-2);
+  border-color: var(--gold);
+}
+
+.campo,
+.area {
+  width: 100%;
+  font-family: var(--fonte-body), system-ui, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  padding: 0.875rem 1rem;
+  transition: border-color 140ms linear;
+}
+
+.area {
+  resize: none;
+  overflow: hidden;
+  display: block;
+}
+
+.campo::placeholder,
+.area::placeholder {
+  color: color-mix(in srgb, var(--ink-2) 70%, transparent);
+}
+
+.campo:focus,
+.area:focus {
+  border-color: var(--gold);
+  outline: none;
+}
+
+.campo[aria-invalid='true'],
+.area[aria-invalid='true'] {
+  border-color: #b4553f;
+}
+
+.exemplos {
+  border: 1px solid var(--line);
+  padding: 1rem 1.125rem;
+  background: color-mix(in srgb, var(--bg-2) 60%, transparent);
+}
+
+.exemplos summary {
+  cursor: pointer;
+  font-size: 0.8125rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+  list-style: none;
+}
+
+.exemplos summary::-webkit-details-marker {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ *
+ * Transição entre telas. Uma só, 300ms, 12px. Planejamento Seção 5.
+ * ------------------------------------------------------------------ */
+
+@keyframes entrar {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tela {
+  animation: entrar 300ms ease-out both;
+}
+
+@keyframes pulso-gravando {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.gravando {
+  animation: pulso-gravando 2s ease-in-out infinite;
+}
+
+/* Espiral da tela de espera, o traço correndo em loop. */
+@keyframes traco {
+  0% {
+    stroke-dashoffset: 1;
+  }
+  55% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -1;
+  }
+}
+
+.traco-lento {
+  animation: traco 3.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Layout
+ * ------------------------------------------------------------------ */
+
+.palco {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+}
+
+.centro {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  max-width: var(--leitura);
+  margin: 0 auto;
+}
+
+.coluna {
+  width: 100%;
+  max-width: var(--leitura);
+  margin: 0 auto;
+}

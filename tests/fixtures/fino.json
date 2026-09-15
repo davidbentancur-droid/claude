@@ -1,0 +1,11 @@
+{
+  "nome": "fino",
+  "descricao": "Quatro respostas curtas, mesmo depois da repescagem. Protocolo de material fino, Seção 8.",
+  "esperado": { "material_fino": true, "aposta": true },
+  "respostas": {
+    "p1": "Mudei de emprego e me separei. Faz uns anos já.",
+    "p2": "Tô meio parado, sem muita novidade ultimamente.",
+    "p3": "Busca: um rumo.\nObstáculo: falta de tempo.",
+    "p4": "Continuar do mesmo jeito."
+  }
+}

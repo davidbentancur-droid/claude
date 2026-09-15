@@ -1,0 +1,11 @@
+{
+  "nome": "piada",
+  "descricao": "Teste do sistema. Desvio J.",
+  "esperado": { "piada": true },
+  "respostas": {
+    "p1": "sou o Batman e moro em Gotham",
+    "p2": "combatendo o crime, o Coringa tá solto de novo",
+    "p3": "Busca: o Coringa.\nObstáculo: o Coringa.",
+    "p4": "Gotham cair de vez"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "nome": "marcelo",
+  "descricao": "Caso do Anexo 11.1 do Prompt Mãe. Referência de forma.",
+  "esperado": {
+    "ato": "Iniciação",
+    "movimento": 9,
+    "movimento_nome": "Prova",
+    "arquetipos": ["Rei ↓", "Guerreiro ↓"],
+    "recorrencia": true
+  },
+  "respostas": {
+    "p1": "2019 eu saí da empresa que eu montei com meu cunhado, briga feia, a gente não se fala até hoje. 2021 nasceu minha filha. 2022 meu pai teve um AVC e eu fui morar dois meses na casa dele em Pelotas pra cuidar, dormia no sofá.",
+    "p2": "Tô tocando uma consultoria sozinho desde o ano passado. Em junho recusei uma proposta de CLT boa e não contei pra minha mulher por três semanas. Ela descobriu quando o cara ligou em casa.",
+    "p3": "Busca: queria parar de acordar apertado.\nObstáculo: eu não consigo pedir nada pra ninguém.",
+    "p4": "Meus filhos me vendo assim, cansado, sempre no telefone, e achando que é normal."
+  }
+}
