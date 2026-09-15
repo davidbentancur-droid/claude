@@ -27,7 +27,7 @@ Estado da aplicação, o que depende de variável de ambiente, e cada decisão t
 
 - Se o modelo devolve Iniciação, Prova (9), Rei ↓ e Guerreiro ↓ no caso canônico.
 - Se o validador aprova de primeira ou gasta retry, e em quais regras ele tropeça.
-- A latência real, que decide se `maxDuration = 120` está folgado ou apertado.
+- A latência real, que decide se o orçamento de 48 s dentro do teto de 60 s do plano Hobby é folgado ou apertado. Este é o item mais urgente dos três.
 
 Para rodar, basta preencher `ANTHROPIC_API_KEY` em `.env.local`:
 
@@ -39,7 +39,14 @@ O comando imprime Ato, Movimento, arquétipos, ecos, contagem de palavras e o ve
 
 **A animação do infográfico foi conferida em estado final forçado, não em execução.** A janela do navegador estava com `visibilityState: hidden` durante a construção, o que impede o `IntersectionObserver` de disparar. A geometria foi verificada nos números (marca no meio exato do arco da Iniciação, seta saindo a 55° dentro do quarto do Retorno e chegando exatamente na circunferência do círculo seguinte) e visualmente no estado final. A sequência temporal em si ainda não foi vista rodando.
 
-**Os testes de Playwright foram escritos, não executados.** `tests/e2e/fluxo.spec.ts` cobre copy, ordem das telas e o portão, sem depender de chave.
+**Os testes de Playwright passam.** 8 casos em dois perfis, desktop 1440 e Pixel 7, todos verdes. Cobrem a fidelidade da copy, a ordem das telas, a repescagem, o portão e a política de privacidade, sem depender de chave de API. O que eles não cobrem é tudo que exige o engine: dossiê, infográfico em execução e os desvios de risco e piada.
+
+Dois bugs reais foram encontrados por eles e corrigidos:
+
+- **`/api/session` era disparada sem ninguém esperar por ela.** Um usuário rápido enviava a P1 antes do cookie existir, levava 401 e a resposta não era gravada, em silêncio. A leitura ainda sairia, porque `/api/read` aceita as respostas pelo corpo, mas o lead chegaria no WhatsApp sem as quatro respostas, que é exatamente o que o formulário existe pra viabilizar. Agora toda chamada espera a promessa da sessão, e `/api/answer` que não grava levanta erro em vez de seguir fingindo.
+- **O botão "Tentar de novo" da tela de erro sempre voltava pra leitura.** Um erro na P1 mandava o cara direto pra `/api/read` sem as quatro respostas, que responde `respostas_incompletas` e cai na mesma tela: laço fechado sem saída. A tela agora lembra de onde veio o erro.
+
+Um terceiro bug foi pego no navegador, antes dos testes: **o enquadramento chegava truncado.** A palavra "cena" aparece quatro vezes no texto e um `split` ingênuo descartava tudo depois da segunda ocorrência, comendo justamente o exemplo que ensina o que é cena. Na frase que o Prompt Mãe chama de "a linha de maior alcance do quiz inteiro".
 
 ## Decisões fora do planejamento
 
@@ -85,9 +92,15 @@ As quatro regras abaixo, escritas como o planejamento pede, reprovam o dossiê e
 
 14. **Rota `/preview`, só em desenvolvimento.** Renderiza o dossiê com o texto do Anexo 11.5 pra revisar tipografia e infográfico sem gastar chamada. Em produção responde 404. Aceita `?ato=`, `?movimento=`, `?posicao=` e `?aposta=1`.
 
-15. **Normalização de telefone não inventa o nono dígito.** Se o cara mandar 10 dígitos, guarda 10. Adivinhar gera número que não existe e queima o contato.
+15. **A P4 não tem repescagem**, ao contrário do que o planejamento Seção 1 pede.
 
-16. **pnpm instalado por `npm i -g`.** `corepack enable` falha nesta máquina por falta de permissão em `C:\Program Files\nodejs`. O pnpm 12 também bloqueia build scripts por padrão: `pnpm-workspace.yaml` libera `unrs-resolver` e `esbuild`, que são os dois que o projeto precisa.
+    Três razões, na ordem de peso. O texto da repescagem pede "um dia, um lugar e uma pessoa dentro do que tu contou", e a P4 pergunta sobre um futuro que não aconteceu: não existe cena pra pedir. O apoio da própria pergunta manda responder com a primeira coisa que vier. E a triagem do caso canônico (Prompt Mãe 11.2) dá Densidade 1 na P4, com o veredito "suficiente pro fechamento", e conclui "Nenhuma repescagem necessária" mesmo com a resposta tendo 13 palavras, abaixo do piso de 15 da regra geral.
+
+    Isso apareceu como um teste vermelho: a P4 da fixture do Marcelo caía na repescagem, contrariando a própria triagem do Prompt Mãe. O protocolo de material fino cobre o caso de a P4 vir vazia demais.
+
+16. **Normalização de telefone não inventa o nono dígito.** Se o cara mandar 10 dígitos, guarda 10. Adivinhar gera número que não existe e queima o contato.
+
+17. **pnpm instalado por `npm i -g`.** `corepack enable` falha nesta máquina por falta de permissão em `C:\Program Files\nodejs`. O pnpm 12 também bloqueia build scripts por padrão: `pnpm-workspace.yaml` libera `unrs-resolver` e `esbuild`, que são os dois que o projeto precisa.
 
 ## Precisa de decisão humana antes de ir pro ar
 
