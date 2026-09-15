@@ -36,14 +36,21 @@ O push pode abrir o Gerenciador de Credenciais do Windows pedindo teu login do G
 
 Depois do push eu ligo a Vercel ao repositório, e cada push passa a gerar deploy.
 
-### 2. Projeto Supabase novo
+### 2. Projeto Supabase novo — FEITO
 
-Cria um projeto Supabase só pro quiz, em São Paulo. Depois, duas opções pra aplicar a migration:
+Projeto `ysjyppytkrygkqoxgzzb` ("Adriano"). A migration foi aplicada pelo SQL Editor e verificada:
 
-- Abre o SQL Editor do projeto novo, cola o conteúdo de `supabase/migrations/0001_quiz.sql` e roda. É uma migration só, idempotente (`create table if not exists`).
-- Ou reconecta o conector do Supabase deste app pro projeto novo, e eu aplico daqui.
+| objeto | tipo | RLS | policies |
+|---|---|---|---|
+| quiz_sessions | tabela | ligado | 0 |
+| quiz_answers | tabela | ligado | 0 |
+| quiz_readings | tabela | ligado | 0 |
+| quiz_leads | tabela | ligado | 0 |
+| leads_para_contato | view | n/a | `security_invoker=on` |
 
-Confere depois que as quatro tabelas estão com RLS ligado e **sem policy nenhuma**. Sem policy e com RLS ligado, as chaves `anon` e `publishable` não leem nem escrevem nada. A única porta é a service role, usada só nos route handlers.
+Sem policy e com RLS ligado, as chaves `anon` e `publishable` não leem nem escrevem nada. A única porta é a service role, usada só nos route handlers. A view herda a permissão de quem consulta, então não é porta lateral.
+
+`SUPABASE_URL` é `https://ysjyppytkrygkqoxgzzb.supabase.co`. Falta só a `SUPABASE_SERVICE_ROLE_KEY` nas envs da Vercel.
 
 ### 3. Variáveis de ambiente na Vercel
 

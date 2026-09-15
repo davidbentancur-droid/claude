@@ -15,7 +15,7 @@ Estado da aplicação, o que depende de variável de ambiente, e cada decisão t
 | Sete route handlers | prontos |
 | Engine: Prompt Mãe integral mais contrato JSON, zod, validador, 2 retries | pronto |
 | Pré-filtro de risco | pronto, duas camadas |
-| Migration do Supabase com RLS e a view `leads_para_contato` | pronta em `supabase/migrations/0001_quiz.sql`, **ainda não aplicada** |
+| Migration do Supabase com RLS e a view `leads_para_contato` | **aplicada** no projeto `ysjyppytkrygkqoxgzzb`, verificada: 4 tabelas com RLS ligado e zero policies, view com `security_invoker=on` |
 | Dossiê com parser de citações em `<q>` dourado | pronto |
 | Infográfico animado com GSAP, reduced-motion, versão de celular, export em PNG 2x | pronto |
 | Tracking Pixel mais GTM | pronto, não quebra com env vazia |
