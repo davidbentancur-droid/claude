@@ -8,7 +8,7 @@
  * Regra da casa: zero travessão em qualquer string deste arquivo.
  */
 
-/** Tela 0. Planejamento Seção 1, rascunho. Pendente de aprovação do Adriano. */
+/** Tela 0. Planejamento Seção 1. Aprovada pelo Adriano. */
 export const ABERTURA = {
   titulo: 'Quatro perguntas. Uma leitura da tua vida com as tuas palavras.',
   apoio: 'Leva uns oito minutos, escrevendo ou falando. A leitura sai na hora.',
@@ -171,7 +171,7 @@ export const FORMULARIO = {
   },
 } as const;
 
-/** Tela 9. A linha acima da VSL. Planejamento Seção 7, rascunho, Adriano pode trocar. */
+/** Tela 9. A linha acima da VSL. Planejamento Seção 7. Aprovada pelo Adriano. */
 export const VSL = {
   linha: 'A leitura inteira, em capítulos, começa aqui.',
   placeholder: 'O vídeo entra aqui.',

@@ -55,8 +55,8 @@ export default function Privacidade() {
             <p>
               Tu pode pedir cópia, correção ou apagamento de tudo o que está guardado, a qualquer
               momento, escrevendo para{' '}
-              <a href="mailto:contato@adrianorahde.com.br" style={{ color: 'var(--gold)' }}>
-                contato@adrianorahde.com.br
+              <a href="mailto:adrianorahde@gmail.com" style={{ color: 'var(--gold)' }}>
+                adrianorahde@gmail.com
               </a>
               . O pedido de apagamento é atendido sem pergunta de volta.
             </p>

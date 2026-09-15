@@ -104,9 +104,9 @@ As quatro regras abaixo, escritas como o planejamento pede, reprovam o dossiê e
 
 ## Precisa de decisão humana antes de ir pro ar
 
-1. **A política de privacidade tem um e-mail inventado.** `contato@adrianorahde.com.br` em `app/privacidade/page.tsx` foi escrito por falta de informação. Se esse endereço não existe, a página promete um canal de exercício de direitos que não atende ninguém. Trocar antes do primeiro tráfego.
+1. ~~E-mail da política de privacidade~~ **resolvido**: `adrianorahde@gmail.com`.
 
-2. **Copy da Tela 0 e a linha acima da VSL** continuam pendentes de aprovação do Adriano. São as duas únicas frases fora do Prompt Mãe. Estão em `lib/copy.ts`, nas constantes `ABERTURA` e `VSL`.
+2. ~~Copy da Tela 0 e a linha acima da VSL~~ **aprovadas pelo Adriano**. Estão em `lib/copy.ts`, nas constantes `ABERTURA` e `VSL`.
 
 3. **A ênfase em "cena"** no enquadramento é a única liberdade tomada sobre copy literal.
 
