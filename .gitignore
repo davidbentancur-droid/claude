@@ -45,3 +45,7 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Token da Vercel, lido por comando e nunca impresso
+.vercel-token
+.vercel

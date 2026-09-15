@@ -6,11 +6,13 @@ import { movimentoPorNumero } from '@/lib/movimentos';
 import type { DossiePublico } from '@/lib/render';
 
 /**
- * Preview do dossiê, só em desenvolvimento.
+ * Preview do dossiê. Existe em desenvolvimento e em deploy de preview, nunca em
+ * produção.
  *
- * Existe pra revisar tipografia e a animação do infográfico sem gastar chamada
- * de engine, e pro QA conferir design sem depender de chave de API. Em produção
- * a rota não existe.
+ * Serve pra revisar tipografia e a animação do infográfico sem gastar chamada de
+ * engine, pro QA conferir design sem depender de chave de API, e pro Adriano ver
+ * o dossiê montado antes de aprovar a copy. Em produção responde 404, porque o
+ * dossiê ali é texto de referência e não a leitura de ninguém.
  *
  * Query: ?ato=Partida|Iniciação|Retorno  &movimento=1..20  &posicao=começo|meio|fim  &aposta=1
  *
@@ -38,7 +40,11 @@ const TEXTO = {
 type Busca = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function Preview({ searchParams }: { searchParams: Busca }) {
-  if (process.env.NODE_ENV === 'production') notFound();
+  // `VERCEL_ENV` é 'production', 'preview' ou 'development'. Localmente ela não
+  // existe, e aí o NODE_ENV decide. Assim a rota vive no dev e no deploy de
+  // preview, e some só no que está no ar pra valer.
+  const ambiente = process.env.VERCEL_ENV ?? process.env.NODE_ENV;
+  if (ambiente === 'production') notFound();
 
   const q = await searchParams;
   const um = (k: string) => (Array.isArray(q[k]) ? q[k][0] : q[k]);
