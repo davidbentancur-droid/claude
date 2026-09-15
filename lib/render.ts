@@ -1,5 +1,9 @@
+import { partirCitacoes, type Pedaco } from './citacoes';
 import { movimentoPorNumero, type Ato } from './movimentos';
 import type { Leitura } from './engine/schema';
+
+export { partirCitacoes };
+export type { Pedaco };
 
 /**
  * Monta o que o cliente recebe depois do lead.
@@ -96,38 +100,6 @@ export function montarDossie(leitura: Leitura, lead: DadosLead): DossiePublico {
       aposta: leitura.movimento.aposta || leitura.material_fino,
     },
   };
-}
-
-/**
- * Quebra o texto nas citações entre aspas, pra a tela renderizar cada uma em
- * <q>. As palavras dele são o único destaque tipográfico do dossiê, então a
- * marcação precisa ser exata: aspas que não fecham ficam como texto.
- */
-export type Pedaco = { tipo: 'texto' | 'citacao'; valor: string };
-
-const ASPAS_TIPOGRAFICAS = /[“”„«»]/g;
-
-export function partirCitacoes(texto: string): Pedaco[] {
-  const normalizado = texto.replace(ASPAS_TIPOGRAFICAS, '"');
-  const pedacos: Pedaco[] = [];
-  const re = /"([^"]+)"/g;
-
-  let ultimo = 0;
-  let m: RegExpExecArray | null;
-
-  while ((m = re.exec(normalizado)) !== null) {
-    if (m.index > ultimo) {
-      pedacos.push({ tipo: 'texto', valor: normalizado.slice(ultimo, m.index) });
-    }
-    pedacos.push({ tipo: 'citacao', valor: m[1] });
-    ultimo = m.index + m[0].length;
-  }
-
-  if (ultimo < normalizado.length) {
-    pedacos.push({ tipo: 'texto', valor: normalizado.slice(ultimo) });
-  }
-
-  return pedacos.filter((p) => p.valor.length > 0);
 }
 
 /** O que vai pro banco desnormalizado, pro momento do contato no WhatsApp. */

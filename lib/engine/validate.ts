@@ -1,3 +1,4 @@
+import { normalizarAspas, trechosCitados } from '../citacoes';
 import { paresBatem } from '../movimentos';
 import type { Leitura } from './schema';
 
@@ -34,12 +35,6 @@ export type Resultado = {
 /* Normalização                                                        */
 /* ------------------------------------------------------------------ */
 
-const ASPAS = /[“”„«»″]/g;
-
-function normalizarAspas(s: string): string {
-  return s.replace(ASPAS, '"');
-}
-
 /**
  * Comparação frouxa: sem acento, sem caixa, espaço colapsado. Serve pra conferir
  * se as palavras são dele. Tolerar acento aqui evita retry quando o modelo
@@ -61,15 +56,6 @@ function palavras(s: string): string[] {
 
 function contarPalavras(s: string): number {
   return palavras(s).length;
-}
-
-/** Trechos entre aspas duplas, já normalizadas. */
-function trechosEntreAspas(s: string): string[] {
-  const out: string[] = [];
-  const re = /"([^"]{2,240})"/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(normalizarAspas(s))) !== null) out.push(m[1]);
-  return out;
 }
 
 /** Maior sequência de palavras consecutivas presente nos dois textos. */
@@ -206,9 +192,13 @@ function semCitacoesDele(texto: string, respostas: Respostas): string {
   const todas = normalizar(
     [respostas.p1, respostas.p2, respostas.p3, respostas.p4].join(' \n '),
   );
-  return normalizarAspas(texto).replace(/"([^"]{2,240})"/g, (inteiro, dentro: string) =>
-    todas.includes(normalizar(dentro)) ? ' ' : inteiro,
-  );
+  let saida = normalizarAspas(texto);
+  for (const trecho of trechosCitados(saida)) {
+    if (todas.includes(normalizar(trecho))) {
+      saida = saida.split(trecho).join(' ');
+    }
+  }
+  return saida;
 }
 
 export function validar(leitura: Leitura, respostas: Respostas): Resultado {
@@ -284,13 +274,24 @@ export function validar(leitura: Leitura, respostas: Respostas): Resultado {
     }
   }
 
+  /**
+   * Termo clínico que ele mesmo escreveu não é diagnóstico do agente.
+   *
+   * A fixture `so-outra-pessoa` expôs isto: o cara conta que a mulher teve
+   * "depressão pós parto em 2020". Devolver esse fato é repetir o material
+   * dele, e o que o Prompt Mãe Seção 1 proíbe é o agente *aplicar* categoria
+   * clínica a alguém. Só entra na régua o termo que ele nunca usou.
+   */
+  const vocabularioDele = normalizar(todasRespostas);
+
   for (const { termo, re } of DIAGNOSTICO) {
-    if (re.test(limpo) || re.test(spoilerLimpo)) {
-      dura(
-        'diagnostico',
-        `"${termo}" é categoria clínica e não entra na leitura. Descreve o que ele contou, com os fatos dele.`,
-      );
-    }
+    if (!(re.test(limpo) || re.test(spoilerLimpo))) continue;
+    if (re.test(vocabularioDele)) continue;
+
+    dura(
+      'diagnostico',
+      `"${termo}" é categoria clínica e não entra na leitura. Descreve o que ele contou, com os fatos dele.`,
+    );
   }
 
   /* --- citações literais ------------------------------------------ */
@@ -302,7 +303,7 @@ export function validar(leitura: Leitura, respostas: Respostas): Resultado {
    * dele reprova o exemplo de referência. A regra do Prompt Mãe Seção 9 é
    * "pelo menos duas citações literais", e é essa que roda aqui.
    */
-  const citacoes = trechosEntreAspas(textoDossie);
+  const citacoes = trechosCitados(textoDossie);
   const normalizadas = normalizar(todasRespostas);
   const dele = citacoes.filter((c) => normalizadas.includes(normalizar(c)));
 

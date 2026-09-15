@@ -48,3 +48,4 @@ next-env.d.ts
 
 # Token da Vercel, lido por comando e nunca impresso
 .vercel-token
+tmp/

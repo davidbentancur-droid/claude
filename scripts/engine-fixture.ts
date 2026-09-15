@@ -10,12 +10,17 @@
  * Ato e o Movimento que o quiz crava com os da leitura completa em casos reais.
  */
 
-import { readFileSync, readdirSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import 'dotenv/config';
+import { config } from 'dotenv';
 
-import { gerarLeitura } from '../lib/engine/read';
+// `dotenv/config` carrega só `.env`. Quem guarda as chaves aqui é `.env.local`,
+// que é o arquivo que o Next também lê e o que está no gitignore.
+config({ path: '.env.local' });
+config();
+
+import { DesvioError, gerarLeitura } from '../lib/engine/read';
 import { checarRiscoConjunto } from '../lib/engine/risk';
 import { validar } from '../lib/engine/validate';
 
@@ -64,6 +69,16 @@ async function rodar(fixture: Fixture, rodadas: number) {
         continue;
       }
 
+      // Guarda a saída inteira pra inspeção. É o que permite entender por que o
+      // validador reprovou sem ter que adivinhar pelo nome da regra.
+      const saida = join(process.cwd(), 'tmp', 'leituras');
+      mkdirSync(saida, { recursive: true });
+      writeFileSync(
+        join(saida, `${fixture.nome}-${i}.json`),
+        JSON.stringify(l, null, 2),
+        'utf8',
+      );
+
       const v = validar(l, fixture.respostas);
       const nDossie =
         palavras(l.dossie.titulo) +
@@ -84,6 +99,7 @@ async function rodar(fixture: Fixture, rodadas: number) {
           `    Ecos         ${l.ecos.map((e) => `${e.historia} (${e.tradicao})`).join(' | ')}`,
           `    Gancho       ${l.gancho_usado}`,
           `    Palavras     dossiê ${nDossie}, spoiler ${palavras(l.spoiler)}${l.material_fino ? ' [material fino]' : ''}`,
+          `    Esforço      ${process.env.ENGINE_EFFORT ?? "medium"}`,
           `    Validação    ${v.ok ? 'passou' : `REPROVOU: ${v.duras.map((f) => f.regra).join(', ')}`}${v.suaves.length ? ` (suaves: ${v.suaves.map((f) => f.regra).join(', ')})` : ''}`,
           `    Título       ${l.dossie.titulo}`,
         ].join('\n'),
@@ -93,6 +109,16 @@ async function rodar(fixture: Fixture, rodadas: number) {
         for (const f of v.duras) console.log(`      ! ${f.mensagem}`);
       }
     } catch (e) {
+      // Risco e piada chegam como DesvioError e são o comportamento correto: o
+      // Prompt Mãe manda parar o fluxo. Reportar como falha escondia isso.
+      if (e instanceof DesvioError) {
+        console.log(
+          `\n  rodada ${i}  ${((Date.now() - t) / 1000).toFixed(1)}s` +
+            `\n    DESVIO ${e.tipo.toUpperCase()}, fluxo interrompido como manda a Seção 8` +
+            `\n    Texto        ${e.texto.slice(0, 160)}`,
+        );
+        continue;
+      }
       console.log(`\n  rodada ${i}: FALHOU  ${e instanceof Error ? e.message : String(e)}`);
     }
   }

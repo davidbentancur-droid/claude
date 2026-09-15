@@ -141,6 +141,17 @@ export const LeituraSchema = z.object({
   }),
   dossie: Dossie,
   sinalizacao: Sinalizacao,
+  /**
+   * A contagem que o modelo declara. Não é fonte de verdade, quem conta de
+   * verdade é o validador. Existe porque obrigar o modelo a escrever o número
+   * o obriga a contar, e contar é o que faltava pra ele respeitar a faixa.
+   */
+  contagem: z
+    .object({
+      dossie: z.coerce.number().int().min(0).default(0),
+      spoiler: z.coerce.number().int().min(0).default(0),
+    })
+    .optional(),
 });
 
 export type Leitura = z.infer<typeof LeituraSchema>;

@@ -19,12 +19,54 @@ import { mensagensDeErro, validar, type Respostas, type Resultado } from './vali
  */
 
 /**
- * O planejamento fixa 6000. Subi pra 8000 porque corte por limite de token vira
- * JSON truncado, que falha no parse e queima um retry inteiro sem sinal claro.
- * A diferença só é cobrada se for usada.
+ * O planejamento fixa 6000. Está em 16000 porque nos modelos Claude 5 o
+ * raciocínio adaptativo conta dentro do `max_tokens`, e corte por limite vira
+ * JSON truncado: falha no parse e queima um retry sem sinal claro. Aconteceu em
+ * 16000. Como a chamada é por streaming, um teto alto não traz risco de timeout,
+ * e só é cobrado o que for usado.
  */
-const MAX_TOKENS = 8000;
-const TEMPERATURA = 0.7;
+const MAX_TOKENS = 32000;
+
+/**
+ * `temperature` foi removido na família Claude 5 e devolve 400. O planejamento
+ * pedia 0.7, que é parâmetro da geração anterior. O controle equivalente hoje é
+ * o esforço, que regula profundidade de raciocínio e gasto de token.
+ *
+ * `medium` e não `high`, e isso foi medido, não escolhido por gosto: contra a
+ * fixture do Marcelo, `high` leva de 108 a 126 segundos e `medium` leva 29, com
+ * análise idêntica nas duas (mesmo Ato, mesmo Movimento, mesma recorrência,
+ * mesmos arquétipos, mesmos ecos). Quatro vezes o tempo sem diferença de
+ * leitura não se paga, ainda mais contra um teto de 60 s.
+ *
+ * Se a Rodada 1 mostrar leitura rasa em casos reais, subir aqui é uma env.
+ */
+type Esforco = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+
+const ESFORCO = (process.env.ENGINE_EFFORT ?? 'medium') as Esforco;
+
+/**
+ * O retry roda em esforço baixo de propósito.
+ *
+ * Ele não refaz a análise: a instrução de correção manda manter o Ato, o
+ * Movimento, os arquétipos e os ecos já escolhidos, porque o que quebrou foi a
+ * escrita. Aparar palavras e trocar uma construção é trabalho mecânico, e em
+ * `medium` cada chamada custa uns 30 segundos, o que não cabe duas vezes dentro
+ * do teto de 60 s do plano Hobby. Em `low` cabe.
+ */
+const ESFORCO_RETRY: Esforco = 'low';
+
+/**
+ * Raciocínio adaptativo ligado ou desligado.
+ *
+ * É a maior fonte de variância de latência: com ele ligado a mesma fixture
+ * levou de 29 a 126 segundos. Contra um teto rígido de 60 s, imprevisibilidade
+ * custa mais que lentidão, porque o caso ruim não é lento, é erro na cara do
+ * usuário com a leitura pronta e paga do outro lado.
+ */
+const PENSAR = (process.env.ENGINE_THINKING ?? 'adaptive') === 'disabled'
+  ? ({ type: 'disabled' } as const)
+  : ({ type: 'adaptive' } as const);
+
 const MAX_TENTATIVAS = 3; // 1 mais 2 retries
 
 /**
@@ -163,9 +205,12 @@ export async function gerarLeitura(respostas: Respostas): Promise<ResultadoLeitu
   for (let i = 0; i < MAX_TENTATIVAS; i++) {
     const decorrido = Date.now() - comeco;
 
-    // Da segunda tentativa em diante, só segue se couber no orçamento. A
-    // estimativa é a média das chamadas anteriores, com 20% de folga.
-    if (i > 0 && decorrido + duracaoMedia * 1.2 > ORCAMENTO_MS) {
+    // Da segunda tentativa em diante, só segue se couber no orçamento. O retry
+    // roda em esforço baixo, então custa bem menos que a chamada que o
+    // antecedeu: estimar pelo tempo dela cheio bloquearia retries que cabem.
+    const estimativa = duracaoMedia * (i === 1 ? 0.6 : 1) * 1.2;
+
+    if (i > 0 && decorrido + estimativa > ORCAMENTO_MS) {
       console.warn('[engine] orçamento de tempo esgotado, entregando o que tem', {
         decorrido,
         tentativas: i,
@@ -176,13 +221,26 @@ export async function gerarLeitura(respostas: Respostas): Promise<ResultadoLeitu
     tentativas = i + 1;
     const antes = Date.now();
 
-    const msg = await anthropic().messages.create({
-      model,
-      max_tokens: MAX_TOKENS,
-      temperature: TEMPERATURA,
-      system,
-      messages: mensagens,
-    });
+    /**
+     * Streaming com `finalMessage()` em vez de `create()`. O resultado é o
+     * mesmo objeto, mas a conexão fica viva durante a geração, o que evita
+     * timeout de HTTP numa chamada que leva dezenas de segundos.
+     *
+     * O `cache_control` no system é o ganho grande: o Prompt Mãe são mais de
+     * dez mil tokens idênticos em toda leitura. Em cache, essa parte da entrada
+     * custa uma fração e chega mais rápido, e o retry reaproveita o mesmo
+     * prefixo porque só a conversa cresce.
+     */
+    const msg = await anthropic()
+      .messages.stream({
+        model,
+        max_tokens: MAX_TOKENS,
+        output_config: { effort: i === 0 ? ESFORCO : ESFORCO_RETRY },
+        thinking: PENSAR,
+        system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
+        messages: mensagens,
+      })
+      .finalMessage();
 
     const duracao = Date.now() - antes;
     duracaoMedia = duracaoMedia === 0 ? duracao : (duracaoMedia + duracao) / 2;
@@ -315,12 +373,19 @@ export function heuristicaCena(texto: string): boolean | null {
   return null;
 }
 
-/** Chamada curta quando a heurística não decide. */
+/**
+ * Chamada curta quando a heurística não decide.
+ *
+ * Raciocínio desligado e esforço baixo de propósito: a pergunta é binária e o
+ * usuário está esperando na tela entre uma pergunta e a outra. Aqui latência
+ * vale mais que profundidade.
+ */
 export async function checarCenaComModelo(texto: string): Promise<boolean> {
   const msg = await anthropic().messages.create({
     model: env.anthropicModel,
-    max_tokens: 20,
-    temperature: 0,
+    max_tokens: 64,
+    thinking: { type: 'disabled' },
+    output_config: { effort: 'low' },
     system: SYSTEM_CHECAGEM_CENA,
     messages: [{ role: 'user', content: `${PERGUNTA_CHECAGEM_CENA}\n\n${texto}` }],
   });
