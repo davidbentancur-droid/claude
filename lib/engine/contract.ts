@@ -70,7 +70,7 @@ Tamanho, e isto é conta, não impressão. Escreve o bloco, conta as palavras, c
 
 Antes de fechar o JSON, conta de verdade e escreve o número em "contagem": "dossie" é a soma das palavras do título mais os cinco blocos de texto, "spoiler" é a do spoiler. Se o número que tu contou estiver fora da faixa, corta o texto e conta de novo, até entrar. Escrever um número que não bate com o texto é pior que estourar a faixa.
 
-A soma dos cinco blocos com o título mira em 345 palavras. A faixa aceita vai de 300 a 400, e 345 é o meio dela: mirar no teto faz o texto passar do teto. Se "material_fino" for true, a mira cai pra 280 e a faixa vai de 250 a 320.
+A soma dos cinco blocos com o título mira em 345 palavras, o meio da faixa de 300 a 400. Mirar no teto faz o texto passar do teto. Baixar a mira além disto foi testado e não adianta: o modelo tem um piso de concisão e a instrução já chegou no limite do que consegue. Se "material_fino" for true, a mira cai pra 280 e a faixa vai de 250 a 320.
 
 O bloco que mais estoura é o do Movimento, porque carrega os dois ecos. Cada eco são duas ou três linhas, e as duas cabem dentro das 95 palavras do bloco, não além delas. Se não couber, encurta o eco, não o resto.
 
