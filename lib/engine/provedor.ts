@@ -66,11 +66,15 @@ class ProvedorAnthropic implements Provedor {
      * mil tokens idênticos em toda leitura, e em cache essa parte da entrada
      * custa uma fração. O retry reaproveita o mesmo prefixo.
      */
+    // `minimal` é degrau da OpenAI e não existe aqui. Sem este piso, trocar o
+    // provedor de volta com a mesma env mandaria um valor inválido pra API.
+    const esforco = (c.esforco as string) === 'minimal' ? 'low' : c.esforco;
+
     const msg = await this.sdk()
       .messages.stream({
         model: this.modelo,
         max_tokens: c.maxTokens,
-        output_config: { effort: c.esforco },
+        output_config: { effort: esforco },
         thinking: c.pensar ? { type: 'adaptive' } : { type: 'disabled' },
         system: [{ type: 'text', text: c.system, cache_control: { type: 'ephemeral' } }],
         messages: c.mensagens,
