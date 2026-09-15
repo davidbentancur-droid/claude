@@ -91,17 +91,27 @@ class ProvedorAnthropic implements Provedor {
 /* OpenAI                                                              */
 /* ------------------------------------------------------------------ */
 
+type EsforcoOpenAI = 'minimal' | 'low' | 'medium' | 'high';
+
 /**
  * Nos modelos de raciocínio da OpenAI `temperature` é rejeitado e o controle é
- * `reasoning_effort`, que só vai até `high`. O mapa achata `xhigh` e `max` nele.
+ * `reasoning_effort`, que vai de `minimal` a `high`. O mapa achata `xhigh` e
+ * `max` no topo, e `ENGINE_EFFORT=minimal` alcança o degrau mais baixo, que não
+ * tem equivalente do lado da Anthropic.
  */
-const ESFORCO_OPENAI: Record<Esforco, 'low' | 'medium' | 'high'> = {
+const ESFORCO_OPENAI: Record<Esforco, EsforcoOpenAI> = {
   low: 'low',
   medium: 'medium',
   high: 'high',
   xhigh: 'high',
   max: 'high',
 };
+
+function esforcoOpenAI(e: Esforco): EsforcoOpenAI {
+  const bruto = process.env.ENGINE_EFFORT;
+  if (bruto === 'minimal') return 'minimal';
+  return ESFORCO_OPENAI[e];
+}
 
 class ProvedorOpenAI implements Provedor {
   readonly nome = 'openai';
@@ -120,7 +130,7 @@ class ProvedorOpenAI implements Provedor {
     const r = await this.sdk().chat.completions.create({
       model: this.modelo,
       max_completion_tokens: c.maxTokens,
-      reasoning_effort: ESFORCO_OPENAI[c.esforco],
+      reasoning_effort: esforcoOpenAI(c.esforco),
       response_format: c.json ? { type: 'json_object' } : { type: 'text' },
       messages: [
         { role: 'system', content: c.system },
