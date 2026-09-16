@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { ABERTURA, ENQUADRAMENTO, ERRO, LENDO, PIADA, RISCO, SPOILER } from '@/lib/copy';
 
-import { montarGeometria } from '../dossie/espiral';
+import { EspiralTraco } from '../dossie/EspiralTraco';
 import { Botao } from '../ui/Botao';
 
 /* ------------------------------------------------------------------ *
@@ -13,8 +13,23 @@ import { Botao } from '../ui/Botao';
 
 export function Abertura({ onComecar }: { onComecar: () => void }) {
   return (
-    <main className="palco tela">
-      <div className="centro">
+    <main className="palco palco-relativo tela">
+      {/*
+        A espiral do método se desenhando devagar atrás do texto. Ela preenche o
+        vazio com o símbolo da coisa em vez de enfeite, e volta na tela de espera
+        e no fim do dossiê, amarrando o percurso inteiro no mesmo desenho.
+      */}
+      <EspiralTraco
+        className="espiral-fundo"
+        tamanho={300}
+        modo="desenhar"
+        comSeta
+        atraso={0.4}
+        opacidade={0.3}
+        cor="var(--gold)"
+      />
+
+      <div className="centro acima-do-fundo">
         <h1 className="display pergunta" style={{ marginBottom: '1.25rem' }}>
           {ABERTURA.titulo}
         </h1>
@@ -81,38 +96,10 @@ export function Lendo() {
     return () => clearInterval(t);
   }, []);
 
-  const g = montarGeometria(90, 90, 66);
-
   return (
     <main className="palco tela">
       <div className="centro" style={{ alignItems: 'center', textAlign: 'center' }}>
-        <svg viewBox="0 0 180 180" width="180" height="180" aria-hidden="true">
-          <path
-            className="traco-lento"
-            d={g.borda}
-            fill="none"
-            stroke="var(--gold)"
-            strokeWidth={1.25}
-            pathLength={1}
-            strokeDasharray="0.62 0.38"
-          />
-          <line
-            x1={g.horizontal.x1}
-            y1={g.horizontal.y1}
-            x2={g.horizontal.x2}
-            y2={g.horizontal.y2}
-            stroke="var(--gold-2)"
-            strokeWidth={1}
-          />
-          <line
-            x1={g.vertical.x1}
-            y1={g.vertical.y1}
-            x2={g.vertical.x2}
-            y2={g.vertical.y2}
-            stroke="var(--gold-2)"
-            strokeWidth={1}
-          />
-        </svg>
+        <EspiralTraco tamanho={180} modo="loop" />
 
         <p className="micro" aria-live="polite" style={{ marginTop: '2rem', minHeight: '1.5em' }}>
           {LENDO.frases[i]}

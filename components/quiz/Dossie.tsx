@@ -7,6 +7,7 @@ import { RODAPE } from '@/lib/copy';
 import type { DossiePublico } from '@/lib/render';
 import { rastrear } from '@/lib/tracking';
 
+import { EspiralTraco } from '../dossie/EspiralTraco';
 import { Infografico } from '../dossie/Infografico';
 import { Texto } from '../dossie/Texto';
 import { VslEmbed } from '../dossie/VslEmbed';
@@ -46,6 +47,24 @@ export function Dossie({ dossie }: { dossie: DossiePublico }) {
         <section style={{ marginTop: '2.25rem' }}>
           <Texto valor={dossie.fechamento} />
         </section>
+
+        {/*
+          A espiral fechando, com a seta rompendo a borda e subindo pro círculo
+          seguinte. Não é enfeite: é o argumento do parágrafo acima desenhado.
+          O fechamento diz que esta leitura é uma janela curta e que o gesto
+          começou antes do que quatro perguntas alcançam. A seta diz o mesmo
+          sem palavra nenhuma, e emenda no vídeo.
+        */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '3.5rem' }}>
+          <EspiralTraco
+            tamanho={120}
+            modo="desenhar"
+            comSeta
+            opacidade={0.5}
+            aoEntrarNaTela
+            cor="var(--gold-2)"
+          />
+        </div>
 
         <VslEmbed />
 

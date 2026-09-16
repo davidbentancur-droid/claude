@@ -314,3 +314,55 @@ q.dele {
   max-width: var(--leitura);
   margin: 0 auto;
 }
+
+/* ------------------------------------------------------------------ *
+ * A espiral que se desenha uma vez. Abertura e fim do dossiê.
+ * ------------------------------------------------------------------ */
+
+@keyframes desenhar-traco {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes aparecer {
+  to {
+    opacity: 1;
+  }
+}
+
+/*
+ * Na abertura ela fica atrás do texto, deslocada pra direita, grande e fraca.
+ * Preenche o vazio sem disputar leitura: é marca d'água, não ilustração.
+ */
+.espiral-fundo {
+  position: absolute;
+  right: 6%;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.palco-relativo {
+  position: relative;
+  overflow: hidden;
+}
+
+.acima-do-fundo {
+  position: relative;
+  z-index: 1;
+}
+
+/*
+ * No celular não há coluna livre ao lado do texto, então ela volta a ser marca
+ * d'água: atrás, centrada e bem fraca, só pra a tela não ser um retângulo preto.
+ */
+@media (max-width: 860px) {
+  .espiral-fundo {
+    right: 50%;
+    top: 50%;
+    transform: translate(50%, -50%);
+    opacity: 0.5;
+  }
+}
