@@ -56,7 +56,7 @@ export function Dossie({ dossie }: { dossie: DossiePublico }) {
           emendam no vídeo.
         */}
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: '3.5rem' }}>
-          <Helice largura={200} voltas={3.6} opacidade={0.42} />
+          <Helice largura={280} voltas={4} opacidade={0.5} />
         </div>
 
         <VslEmbed />

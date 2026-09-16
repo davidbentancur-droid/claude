@@ -19,7 +19,7 @@ export function Abertura({ onComecar }: { onComecar: () => void }) {
         gira. O círculo de traço fica reservado pro infográfico, que é onde ele
         precisa impressionar.
       */}
-      <Helice className="espiral-fundo" largura={430} voltas={3.4} opacidade={0.5} />
+      <Helice className="espiral-fundo" largura={560} voltas={4} opacidade={0.62} />
 
       <div className="centro acima-do-fundo abertura-texto">
         <h1 className="display pergunta" style={{ marginBottom: '1.25rem' }}>
@@ -95,7 +95,7 @@ export function Lendo() {
           Aqui ela gira bem mais rápido que na abertura, porque é estado de
           espera: precisa de movimento visível pra dizer que a coisa não travou.
         */}
-        <Helice largura={230} voltas={3} opacidade={0.75} velocidade={0.34} />
+        <Helice largura={300} voltas={3.4} opacidade={0.8} velocidade={0.34} />
 
         <p className="micro" aria-live="polite" style={{ marginTop: '2rem', minHeight: '1.5em' }}>
           {LENDO.frases[i]}

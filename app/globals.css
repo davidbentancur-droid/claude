@@ -341,8 +341,11 @@ q.dele {
  * disputavam os mesmos pixels, e a espiral entrava por cima da coluna.
  */
 .abertura-texto {
-  margin-left: max(1.5rem, 7vw);
+  margin-left: max(1.5rem, 6vw);
   margin-right: auto;
+  /* Mais estreita que a coluna de leitura padrão: o título é curto e a folga
+     que sobra vira espaço pra espiral crescer sem encostar nele. */
+  max-width: 520px;
 }
 
 .espiral-fundo {
