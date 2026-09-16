@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { precisaRepescagem } from '@/lib/engine/read';
+import { precisaRepescagem } from '@/lib/engine/repescagem';
 import { checarRisco } from '@/lib/engine/risk';
 import { atualizarStatus, lerCookieSessao } from '@/lib/session';
 

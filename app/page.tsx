@@ -303,18 +303,40 @@ export default function Quiz() {
     try {
       await garantirSessao();
 
-      const r = await fetch('/api/read', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          respostas: {
-            p1: respostas['1'] ?? '',
-            p2: respostas['2'] ?? '',
-            p3: respostas['3'] ?? '',
-            p4: respostas['4'] ?? '',
-          },
-        }),
+      const corpo = JSON.stringify({
+        respostas: {
+          p1: respostas['1'] ?? '',
+          p2: respostas['2'] ?? '',
+          p3: respostas['3'] ?? '',
+          p4: respostas['4'] ?? '',
+        },
       });
+
+      /**
+       * Uma repetição automática quando a conexão morre, antes de mostrar erro.
+       *
+       * A chamada 1 leva uns 35 segundos, e 35 segundos num celular é tempo de
+       * sobra pra tela apagar, o cara trocar de app ou o sinal oscilar. Quando
+       * isso acontece o `fetch` morre aqui, mas do lado do servidor a leitura
+       * termina e fica salva. A segunda tentativa cai no caminho de recuperação
+       * da `/api/read`, que devolve o spoiler guardado na hora, sem gastar
+       * chamada nenhuma. O cara nem vê que teve problema.
+       */
+      let r: Response;
+      try {
+        r = await fetch('/api/read', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: corpo,
+        });
+      } catch {
+        rastrear.erro('rede_retry');
+        r = await fetch('/api/read', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: corpo,
+        });
+      }
 
       const dados = (await r.json().catch(() => ({}))) as {
         tipo?: 'spoiler' | 'risco' | 'piada';

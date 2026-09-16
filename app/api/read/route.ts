@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { DesvioError, gerarAnalise } from '@/lib/engine/read';
+import { AnaliseSchema } from '@/lib/engine/schema';
 import { checarRiscoConjunto } from '@/lib/engine/risk';
 import type { Respostas } from '@/lib/engine/validate';
 import { limitarLeitura, MENSAGEM_LIMITE } from '@/lib/ratelimit';
@@ -50,17 +51,41 @@ export async function POST(req: Request) {
 
   const db = supabaseOpcional();
 
-  // Uma leitura por sessão. Rodar de novo gasta a chamada e pode devolver um
-  // Ato diferente pro mesmo material, que é pior que o erro que isso evita.
+  /**
+   * Uma leitura por sessão, e quando ela já existe esta rota devolve o spoiler
+   * salvo em vez de recusar.
+   *
+   * Antes aqui respondia 409 `leitura_ja_existe`, e isso prendia o cara num beco
+   * sem saída. O caso real, num iPhone: a chamada 1 leva uns 35 segundos, ele
+   * troca de app ou a tela apaga, o Safari suspende a página e o fetch morre.
+   * Do lado de cá a leitura terminou e foi salva. Ele volta, vê a tela de erro,
+   * aperta "Tentar de novo", e toda tentativa a partir dali batia no 409 e caía
+   * na mesma tela. A leitura estava pronta e ele nunca ia chegar nela.
+   *
+   * Devolver o spoiler de novo não abre nada: ele já foi entregue a esta sessão,
+   * e o portão do Prompt Mãe é o dossiê, que só a `/api/lead` devolve. O status
+   * volta pra `spoiler_shown` porque é onde o fluxo dele realmente está.
+   */
   if (db) {
     const { data } = await db
       .from('quiz_readings')
-      .select('session_id')
+      .select('output')
       .eq('session_id', sessionId)
       .maybeSingle();
 
     if (data) {
-      return NextResponse.json({ erro: 'leitura_ja_existe' }, { status: 409 });
+      const salva = AnaliseSchema.safeParse(data.output);
+      if (salva.success) {
+        await atualizarStatus(sessionId, 'spoiler_shown');
+        return NextResponse.json({
+          tipo: 'spoiler',
+          spoiler: salva.data.spoiler,
+          recuperada: true,
+        });
+      }
+      // Linha corrompida. Melhor recomeçar que servir lixo.
+      console.error('[read] leitura salva ilegível, apagando', { session_id: sessionId });
+      await db.from('quiz_readings').delete().eq('session_id', sessionId);
     }
   }
 
@@ -114,6 +139,34 @@ export async function POST(req: Request) {
         latency_ms: r.latency_ms,
         dossie_status: 'pendente',
       });
+      /**
+       * Conflito de chave é empate, não erro.
+       *
+       * Duas análises podem estar no ar ao mesmo tempo quando o cara aperta
+       * "Tentar de novo" antes da primeira terminar, e aí a segunda a chegar
+       * bate na chave primária. A que perdeu joga fora o próprio trabalho e
+       * serve o spoiler da que ganhou: as duas leram o mesmo material, e o cara
+       * receber uma tela de erro com duas leituras prontas no banco seria o pior
+       * dos dois mundos.
+       */
+      if (error?.code === '23505') {
+        const { data: existente } = await db
+          .from('quiz_readings')
+          .select('output')
+          .eq('session_id', sessionId)
+          .maybeSingle();
+
+        const salva = AnaliseSchema.safeParse(existente?.output);
+        if (salva.success) {
+          await atualizarStatus(sessionId, 'spoiler_shown');
+          return NextResponse.json({
+            tipo: 'spoiler',
+            spoiler: salva.data.spoiler,
+            recuperada: true,
+          });
+        }
+      }
+
       if (error) {
         console.error('[read] não gravou a análise', error);
         return NextResponse.json({ erro: 'nao_gravou' }, { status: 500 });

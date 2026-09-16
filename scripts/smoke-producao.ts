@@ -92,6 +92,31 @@ async function main() {
    * conferir que a resposta não traz texto nenhum da leitura. No fluxo real
    * ninguém espera: ela roda enquanto o cara preenche o formulário.
    */
+  /*
+   * O caso do celular do Adriano, 16/09.
+   *
+   * A chamada 1 leva uns 35 s, e nesse tempo a tela do iPhone apaga, o Safari
+   * suspende a página e o fetch morre. Do lado de cá a leitura terminou e está
+   * salva. Ele volta, vê a tela de erro, aperta "Tentar de novo", e isto aqui é
+   * exatamente o que acontece: uma segunda `/api/read` na mesma sessão.
+   *
+   * Antes respondia 409 e ele ficava preso pra sempre com a leitura pronta do
+   * outro lado. Agora tem que devolver o spoiler guardado, na hora, sem gastar
+   * chamada de modelo.
+   */
+  const recuperada = await chamar('/api/read', {});
+  tudoBem =
+    ok(
+      'segunda leitura recupera em vez de travar',
+      recuperada.status === 200 && recuperada.dados.recuperada === true,
+      `${recuperada.status} em ${(recuperada.ms / 1000).toFixed(1)}s`,
+    ) && tudoBem;
+  tudoBem =
+    ok(
+      'e recupera o mesmo spoiler',
+      recuperada.dados.spoiler === leitura.dados.spoiler,
+    ) && tudoBem;
+
   const escrita = await chamar('/api/dossie', {});
   tudoBem =
     ok('dossiê escrito', escrita.status === 200, `${(escrita.ms / 1000).toFixed(1)}s`) &&
