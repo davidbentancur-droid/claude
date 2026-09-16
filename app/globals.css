@@ -335,9 +335,19 @@ q.dele {
  * Na abertura ela fica atrás do texto, deslocada pra direita, grande e fraca.
  * Preenche o vazio sem disputar leitura: é marca d'água, não ilustração.
  */
+/*
+ * Composição da abertura em duas colunas: o texto sai do centro e vai pra
+ * esquerda, e a espiral ganha a direita inteira. Centrado, o texto e a espiral
+ * disputavam os mesmos pixels, e a espiral entrava por cima da coluna.
+ */
+.abertura-texto {
+  margin-left: max(1.5rem, 7vw);
+  margin-right: auto;
+}
+
 .espiral-fundo {
   position: absolute;
-  right: 6%;
+  right: 7%;
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
@@ -355,14 +365,19 @@ q.dele {
 }
 
 /*
- * No celular não há coluna livre ao lado do texto, então ela volta a ser marca
- * d'água: atrás, centrada e bem fraca, só pra a tela não ser um retângulo preto.
+ * Abaixo de 1100px não cabem duas colunas. O texto volta ao centro e a espiral
+ * vira marca d'água atrás dele: atenua, mas a tela deixa de ser um retângulo
+ * preto vazio.
  */
-@media (max-width: 860px) {
+@media (max-width: 1100px) {
+  .abertura-texto {
+    margin-left: auto;
+  }
+
   .espiral-fundo {
     right: 50%;
-    top: 50%;
+    top: 54%;
     transform: translate(50%, -50%);
-    opacity: 0.5;
+    opacity: 0.45;
   }
 }

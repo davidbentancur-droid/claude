@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { ABERTURA, ENQUADRAMENTO, ERRO, LENDO, PIADA, RISCO, SPOILER } from '@/lib/copy';
 
-import { EspiralTraco } from '../dossie/EspiralTraco';
+import { Helice } from '../dossie/Helice';
 import { Botao } from '../ui/Botao';
 
 /* ------------------------------------------------------------------ *
@@ -15,21 +15,13 @@ export function Abertura({ onComecar }: { onComecar: () => void }) {
   return (
     <main className="palco palco-relativo tela">
       {/*
-        A espiral do método se desenhando devagar atrás do texto. Ela preenche o
-        vazio com o símbolo da coisa em vez de enfeite, e volta na tela de espera
-        e no fim do dossiê, amarrando o percurso inteiro no mesmo desenho.
+        A espiral em profundidade, girando devagar demais pra alguém reparar que
+        gira. O círculo de traço fica reservado pro infográfico, que é onde ele
+        precisa impressionar.
       */}
-      <EspiralTraco
-        className="espiral-fundo"
-        tamanho={300}
-        modo="desenhar"
-        comSeta
-        atraso={0.4}
-        opacidade={0.3}
-        cor="var(--gold)"
-      />
+      <Helice className="espiral-fundo" largura={430} voltas={3.4} opacidade={0.5} />
 
-      <div className="centro acima-do-fundo">
+      <div className="centro acima-do-fundo abertura-texto">
         <h1 className="display pergunta" style={{ marginBottom: '1.25rem' }}>
           {ABERTURA.titulo}
         </h1>
@@ -99,7 +91,11 @@ export function Lendo() {
   return (
     <main className="palco tela">
       <div className="centro" style={{ alignItems: 'center', textAlign: 'center' }}>
-        <EspiralTraco tamanho={180} modo="loop" />
+        {/*
+          Aqui ela gira bem mais rápido que na abertura, porque é estado de
+          espera: precisa de movimento visível pra dizer que a coisa não travou.
+        */}
+        <Helice largura={230} voltas={3} opacidade={0.75} velocidade={0.34} />
 
         <p className="micro" aria-live="polite" style={{ marginTop: '2rem', minHeight: '1.5em' }}>
           {LENDO.frases[i]}
