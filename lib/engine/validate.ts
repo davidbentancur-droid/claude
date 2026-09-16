@@ -543,6 +543,26 @@ export function validarDossie(
     );
   }
 
+  /* --- o nome dele -------------------------------------------------- */
+
+  /**
+   * Prompt Mãe Seção 9, entre os obrigatórios: "Nome dele, se ele tiver dado".
+   * A Seção 4.3 completa dizendo que o dossiê liberado usa o nome que ele acabou
+   * de dar, e o checklist cobra no item 18.
+   *
+   * Vira regra dura porque o dossiê é escrito antes do formulário, com o
+   * marcador {{NOME}} no lugar. Sem marcador não há onde trocar, e o texto chega
+   * sem o nome do cara sem que nada quebre. O smoke de produção pegou isto uma
+   * vez, depois que a leitura foi partida em duas chamadas: a instrução do
+   * marcador ficou no fim de um contrato cheio e o modelo simplesmente não usou.
+   */
+  if (!/\{\{\s*NOME\s*\}\}/.test(textoDossie)) {
+    dura(
+      'sem_marcador_nome',
+      'O dossiê não tem o marcador {{NOME}} em lugar nenhum, então ele vai chegar sem o nome do cara. Abre a devolutiva em vocativo, assim: "{{NOME}}, em sete anos tu deu...".',
+    );
+  }
+
   /* --- forma do Ato e do Movimento --------------------------------- */
 
   for (const { rotulo, re } of ROTULOS_ATO) {

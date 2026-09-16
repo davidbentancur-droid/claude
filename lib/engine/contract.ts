@@ -143,7 +143,13 @@ Antes de fechar o JSON, escreve em "contagem" o número de palavras que tu conto
 
 As citações literais das palavras dele entram entre aspas duplas, escapadas como o JSON exige: "tu resumiu em \\"queria parar de acordar apertado\\" e segue". Aspa simples também é aceita, mas a dupla é a preferida. São pelo menos duas no dossiê, copiadas exatamente como ele escreveu, sem corrigir a gramática dele.
 
-Sobre o nome dele: o dossiê é escrito antes de ele dar o nome. Onde o nome entraria, escreve o marcador {{NOME}}. O sistema troca depois. Se a profissão dele conversar com o material, usa o marcador {{PROFISSAO}} no máximo uma vez, e se não conversar, não usa nenhuma vez.`;
+Sobre o nome dele, e isto é obrigatório: o dossiê é escrito antes de ele dar o nome, então onde o nome entraria tu escreve o marcador {{NOME}} e o sistema troca depois.
+
+**A devolutiva abre chamando ele pelo nome**, com o marcador em vocativo e vírgula, exatamente como o dossiê do Anexo 11.5: "{{NOME}}, em sete anos tu deu três fatos...". O marcador tem que aparecer pelo menos uma vez no dossiê, e a abertura da devolutiva é o lugar dele. Dossiê que chega sem o marcador chega sem o nome do cara, e a Seção 9 põe o nome dele entre os obrigatórios.
+
+Uma vez basta. Repetir o nome a cada bloco soa a mala direta.
+
+Se a profissão dele conversar com o material, usa o marcador {{PROFISSAO}} no máximo uma vez, e se não conversar, não usa nenhuma vez.`;
 
 /* ------------------------------------------------------------------ */
 /* Mensagens do usuário                                                */
