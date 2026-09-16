@@ -127,6 +127,16 @@ body {
 }
 
 /*
+ * O negrito do dossiê. Só três coisas o usam, e todas por ordem do Prompt Mãe
+ * Seção 5: os rótulos "A armadilha:" e "O convite:", e o nome do Movimento.
+ * Peso e cor cheia, sem dourado, que é reservado às palavras dele.
+ */
+.corpo strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/*
  * As palavras dele. Único destaque tipográfico do dossiê, e ele carrega
  * significado, então não leva mais nada junto: sem fundo, sem borda, sem peso.
  */

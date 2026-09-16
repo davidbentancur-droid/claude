@@ -8,10 +8,16 @@ import { Helice } from '../dossie/Helice';
 import { Botao } from '../ui/Botao';
 
 /* ------------------------------------------------------------------ *
- * Tela 0 · Abertura
+ * Tela 1 · A oferta. Prompt Mãe Seção 2.
+ *
+ * A hierarquia é decisão de tela, não de texto: o qualificador ("é pra quem")
+ * vai em tom baixo e a promessa ("tu sai daqui sabendo") vai em tom cheio,
+ * porque é ela que faz o cara começar. As palavras são as do documento.
  * ------------------------------------------------------------------ */
 
 export function Abertura({ onComecar }: { onComecar: () => void }) {
+  const [qualificador, promessa] = ABERTURA.paragrafos;
+
   return (
     <main className="palco palco-relativo tela">
       {/*
@@ -22,12 +28,20 @@ export function Abertura({ onComecar }: { onComecar: () => void }) {
       <Helice className="espiral-fundo" largura={560} voltas={4} opacidade={0.62} />
 
       <div className="centro acima-do-fundo abertura-texto">
-        <h1 className="display pergunta" style={{ marginBottom: '1.25rem' }}>
+        <h1 className="display pergunta" style={{ marginBottom: '0.75rem' }}>
           {ABERTURA.titulo}
         </h1>
-        <p className="corpo" style={{ color: 'var(--ink-2)', margin: '0 0 2.5rem' }}>
-          {ABERTURA.apoio}
+        <p className="subtitulo" style={{ margin: '0 0 2rem' }}>
+          {ABERTURA.linha}
         </p>
+
+        <p className="corpo" style={{ color: 'var(--ink-2)', margin: '0 0 1.1em' }}>
+          {qualificador}
+        </p>
+        <p className="corpo" style={{ margin: '0 0 2.5rem' }}>
+          {promessa}
+        </p>
+
         <div>
           <Botao onClick={onComecar}>{ABERTURA.botao}</Botao>
         </div>
@@ -40,31 +54,43 @@ export function Abertura({ onComecar }: { onComecar: () => void }) {
 }
 
 /* ------------------------------------------------------------------ *
- * Tela 1 · Enquadramento
+ * Tela 2 · Como responder. Prompt Mãe Seção 2.
  *
- * Texto literal do Prompt Mãe. A única liberdade tomada aqui é dar ênfase à
- * palavra "cena", que é o que a frase inteira existe pra ensinar.
+ * Texto literal. A única liberdade tomada aqui é dar ênfase à palavra "cena",
+ * que é o que a tela inteira existe pra ensinar, e o próprio documento já a
+ * escreve em negrito.
  * ------------------------------------------------------------------ */
 
 export function Enquadramento({ onSeguir }: { onSeguir: () => void }) {
-  // Só a primeira ocorrência. "cena" aparece quatro vezes no texto, e um split
-  // ingênuo descartaria tudo depois da segunda, cortando justamente o exemplo
-  // que ensina o que é cena.
-  const corte = ENQUADRAMENTO.texto.indexOf(ENQUADRAMENTO.enfase);
-  const antes = ENQUADRAMENTO.texto.slice(0, corte);
-  const depois = ENQUADRAMENTO.texto.slice(corte + ENQUADRAMENTO.enfase.length);
+  const [regra, exemplos, fecho] = ENQUADRAMENTO.paragrafos;
+
+  // Só a primeira ocorrência. "cena" aparece de novo na frase seguinte, e um
+  // split ingênuo descartaria tudo depois da segunda.
+  const corte = regra.indexOf(ENQUADRAMENTO.enfase);
+  const antes = regra.slice(0, corte);
+  const depois = regra.slice(corte + ENQUADRAMENTO.enfase.length);
 
   return (
     <main className="palco tela">
       <div className="centro">
         <p
           className="corpo"
-          style={{ fontSize: 'clamp(1.125rem, 1rem + 0.6vw, 1.25rem)', margin: '0 0 2.5rem' }}
+          style={{ fontSize: 'clamp(1.125rem, 1rem + 0.6vw, 1.25rem)', margin: '0 0 1.25em' }}
         >
           {antes}
           <em style={{ fontStyle: 'normal', color: 'var(--gold)' }}>{ENQUADRAMENTO.enfase}</em>
           {depois}
         </p>
+
+        {/* Os dois exemplos em tom baixo: eles ilustram a regra, não são a regra. */}
+        <p className="corpo" style={{ color: 'var(--ink-2)', margin: '0 0 1.25em' }}>
+          {exemplos}
+        </p>
+
+        <p className="corpo" style={{ margin: '0 0 2.5rem' }}>
+          {fecho}
+        </p>
+
         <div>
           <Botao onClick={onSeguir}>{ENQUADRAMENTO.botao}</Botao>
         </div>

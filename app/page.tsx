@@ -46,7 +46,13 @@ type Guardado = {
   tela: Tela;
   atual: NumeroPergunta;
   respostas: Record<string, string>;
-  repescadas: number[];
+  /**
+   * Uma repescagem no fluxo inteiro, Prompt Mãe Seção 2. Era uma lista de
+   * perguntas já repescadas, quando a cota era por pergunta.
+   */
+  repescou: boolean;
+  /** Formato antigo, só pra retomar quem tinha estado salvo antes da troca. */
+  repescadas?: number[];
 };
 
 const CHAVE = 'mdm_estado';
@@ -75,7 +81,7 @@ export default function Quiz() {
   const [tela, setTela] = useState<Tela>('abertura');
   const [atual, setAtual] = useState<NumeroPergunta>(1);
   const [respostas, setRespostas] = useState<Record<string, string>>({});
-  const [repescadas, setRepescadas] = useState<number[]>([]);
+  const [repescou, setRepescou] = useState(false);
   const [pendente, setPendente] = useState('');
 
   const [spoiler, setSpoiler] = useState('');
@@ -124,7 +130,7 @@ export default function Quiz() {
     if (!g) return;
 
     setRespostas(g.respostas ?? {});
-    setRepescadas(g.repescadas ?? []);
+    setRepescou(g.repescou ?? (g.repescadas ?? []).length > 0);
     setAtual(g.atual ?? 1);
 
     // Dossiê e spoiler não voltam do localStorage: eles vivem no servidor e só
@@ -137,12 +143,12 @@ export default function Quiz() {
     try {
       window.localStorage.setItem(
         CHAVE,
-        JSON.stringify({ tela, atual, respostas, repescadas } satisfies Guardado),
+        JSON.stringify({ tela, atual, respostas, repescou } satisfies Guardado),
       );
     } catch {
       // Navegador com armazenamento bloqueado. O fluxo segue, só não retoma.
     }
-  }, [tela, atual, respostas, repescadas]);
+  }, [tela, atual, respostas, repescou]);
 
   /* --- gravação -------------------------------------------------- */
 
@@ -185,7 +191,12 @@ export default function Quiz() {
 
     try {
       const dadosPergunta = PERGUNTAS.find((p) => p.numero === numero);
-      const podeRepescar = dadosPergunta?.repescagem && !repescadas.includes(numero);
+      /**
+       * A cota é do fluxo, não da pergunta. Prompt Mãe Seção 2: uma repescagem
+       * no máximo, em P1 ou P2, e o normal é zero. Se a P1 já gastou, a P2 segue
+       * com o que vier.
+       */
+      const podeRepescar = dadosPergunta?.repescagem && !repescou;
 
       if (podeRepescar) {
         await garantirSessao();
@@ -208,7 +219,7 @@ export default function Quiz() {
 
         if (dados.needs_followup) {
           setPendente(texto);
-          setRepescadas((v) => [...v, numero]);
+          setRepescou(true);
           rastrear.repescagem(numero);
           setTela('repescagem');
           return;
@@ -376,7 +387,7 @@ export default function Quiz() {
 
   function refazer() {
     setRespostas({});
-    setRepescadas([]);
+    setRepescou(false);
     setPendente('');
     setSpoiler('');
     setDesvio('');

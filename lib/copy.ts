@@ -8,18 +8,44 @@
  * Regra da casa: zero travessão em qualquer string deste arquivo.
  */
 
-/** Tela 0. Planejamento Seção 1. Aprovada pelo Adriano. */
+/**
+ * Tela 1 · A oferta. Prompt Mãe Seção 2, copy fixa, colada como está.
+ *
+ * A régua das duas telas: esta promete só o que o dossiê entrega, nunca explica
+ * o método, nunca usa "quiz" nem "arquétipo", nunca pede dado nenhum.
+ *
+ * Duas coisas aqui merecem registro. A linha "Nenhum dado é pedido antes da
+ * leitura estar pronta", do planejamento Seção 1, saiu: o Prompt Mãe manda colar
+ * as duas telas inteiras e não inventar linha, e o CLAUDE.md diz que onde os
+ * dois divergem em copy o Prompt Mãe vence. E o título vem partido em duas
+ * chamadas porque são dezessete palavras: numa linha só, no corpo de display, o
+ * cara lê cinco linhas de manchete antes de qualquer outra coisa. As palavras e
+ * a ordem são as do documento.
+ */
 export const ABERTURA = {
-  titulo: 'Quatro perguntas. Uma leitura da tua vida com as tuas palavras.',
-  apoio: 'Leva uns oito minutos, escrevendo ou falando. A leitura sai na hora.',
+  titulo: 'Quatro perguntas sobre a tua vida.',
+  linha: 'No fim, a leitura do capítulo exato em que tu está.',
+  paragrafos: [
+    'É pra quem olha pra própria vida e vê as coisas acontecendo sem conseguir dizer o que está acontecendo. Decisão travada há meses, um cansaço que dormir não resolve, a sensação de já ter passado por isso antes.',
+    'Tu sai daqui sabendo: em que ponto da travessia tu está, qual é a armadilha desse ponto e qual é o convite dele, o gesto que a tua vida vem repetindo há anos sem tu reparar, e duas histórias de três mil anos atrás que contam exatamente o que tu vive hoje.',
+  ],
   botao: 'Começar',
-  rodape: 'Nenhum dado é pedido antes da leitura estar pronta.',
+  rodape: 'Uns oito minutos, escrevendo ou falando.',
 } as const;
 
-/** Tela 1. Prompt Mãe Seção 2, literal. "A linha de maior alcance do quiz inteiro." */
+/**
+ * Tela 2 · Como responder. Prompt Mãe Seção 2, copy fixa.
+ *
+ * Ela nunca repete a promessa da Tela 1: o trabalho dela é só a forma da
+ * resposta. A ênfase em "cena" é do próprio documento, que escreve a palavra em
+ * negrito, e é a linha de maior alcance do quiz inteiro.
+ */
 export const ENQUADRAMENTO = {
-  texto:
-    'Quatro perguntas, escrevendo ou falando, do jeito que sair. Uma coisa só antes de começar: o que eu preciso aqui é cena, não resumo. Cena é uma coisa que aconteceu num dia, com lugar e gente dentro. "Mudei muito de cidade" é assunto. "Em 2019 eu saí da empresa depois de uma briga com meu sócio e a gente não se falou mais" é cena. Duas cenas bem contadas valem mais que dez tópicos.',
+  paragrafos: [
+    'Uma coisa só antes de começar, e é ela que decide se a leitura vai ser sobre ti ou sobre qualquer um: me dá cena, não resumo. Cena é o que aconteceu num dia, com lugar e gente dentro.',
+    '"Mudei muito de cidade" é assunto. "Em 2019 eu saí da empresa depois de uma briga com meu sócio e a gente não se falou mais" é cena.',
+    'Duas cenas bem contadas valem mais que dez tópicos. Escreve ou fala, do jeito que sair.',
+  ],
   enfase: 'cena',
   botao: 'Entendi, vamos',
 } as const;
@@ -34,7 +60,14 @@ export type Pergunta = {
   exemplos: { nao: string; sim: string } | null;
   /** P3 tem dois campos empilhados, salvos concatenados com quebra de linha. */
   campos: { chave: string; rotulo: string }[] | null;
-  /** P3 não tem repescagem: a pergunta é curta por desenho. */
+  /**
+   * Primeiro critério do portão de repescagem, Prompt Mãe Seção 2: só P1 e P2.
+   * As P3 e P4 pedem frase, não cena, e nunca são repescadas.
+   *
+   * Isto sozinho não libera a pergunta. Os outros dois critérios rodam em
+   * `lib/engine/read.ts`, e a cota de uma repescagem no fluxo inteiro é contada
+   * na máquina de estados.
+   */
   repescagem: boolean;
 };
 
@@ -94,15 +127,15 @@ export const PERGUNTAS: readonly Pergunta[] = [
     exemplos: null,
     campos: null,
     /**
-     * Sem repescagem, ao contrário do que o planejamento Seção 1 pede.
+     * Sem repescagem. O Prompt Mãe Seção 2 agora crava isto no primeiro critério
+     * do portão, e o planejamento Seção 1, que pedia o contrário, perde.
      *
-     * Três razões, na ordem de peso. A repescagem pede "um dia, um lugar e uma
+     * A razão é do desenho da pergunta: a repescagem pede "um dia, um lugar e uma
      * pessoa dentro do que tu contou", e a P4 pergunta sobre um futuro que não
-     * aconteceu: não existe cena pra pedir. O apoio da própria pergunta manda
-     * responder com a primeira coisa que vier. E a triagem do caso canônico
+     * aconteceu, então não existe cena pra pedir. O apoio da própria pergunta
+     * manda responder com a primeira coisa que vier, e a triagem do caso canônico
      * (Prompt Mãe 11.2) dá Densidade 1 na P4 com o veredito "suficiente pro
-     * fechamento" e conclui "Nenhuma repescagem necessária", mesmo com a
-     * resposta tendo 13 palavras, abaixo do piso de 15.
+     * fechamento", com 13 palavras, bem abaixo do piso de 25.
      *
      * O que a P4 precisa entregar é a dor na palavra dele, e isso ela entrega
      * curta. O protocolo de material fino cobre o caso de vir vazia demais.
@@ -116,7 +149,12 @@ export const EXEMPLOS_ROTULO = {
   sim: 'Assim sim',
 } as const;
 
-/** Repescagem. Planejamento Seção 1, derivado da regra de resposta pobre do Prompt Mãe. */
+/**
+ * Repescagem. Prompt Mãe Seção 2.
+ *
+ * Uma no fluxo inteiro, no máximo, e o normal é zero. Perguntar de novo a cada
+ * resposta arrasta o quiz, cansa o cara e faz ele desistir antes do formulário.
+ */
 export const REPESCAGEM = {
   texto:
     'Só uma coisa antes de seguir. Me dá um dia, um lugar e uma pessoa dentro do que tu contou.',

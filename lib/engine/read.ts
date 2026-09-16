@@ -2,11 +2,7 @@ import { env } from '../env';
 import { instrucaoCorrecao, montarRespostas } from './contract';
 import { provedor, type Chamada, type Esforco } from './provedor';
 import { LeituraMinimaSchema, LeituraSchema, type Leitura } from './schema';
-import {
-  PERGUNTA_CHECAGEM_CENA,
-  SYSTEM_CHECAGEM_CENA,
-  systemPrompt,
-} from './system-prompt';
+import { systemPrompt } from './system-prompt';
 import { mensagensDeErro, validar, type Respostas, type Resultado } from './validate';
 
 /**
@@ -313,64 +309,74 @@ export async function gerarLeitura(respostas: Respostas): Promise<ResultadoLeitu
 /* Repescagem                                                          */
 /* ------------------------------------------------------------------ */
 
+/** Verbo de ação conjugado, feito por ele. É o sinal de que existe cena. */
+const VERBO_DE_ACAO =
+  /\b(?:fui|foi|era|eram|estava|estive|tinha|tive|fiz|fez|saí|saiu|falei|falou|disse|contei|contou|nasceu|morreu|comecei|começou|parei|parou|decidi|decidiu|pedi|pediu|mudei|mudou|voltei|voltou|perdi|perdeu|casei|casou|larguei|largou|briguei|brigou|recusei|recusou|aceitei|aceitou|assinei|assinou|entrei|entrou|liguei|ligou|escrevi|escreveu|vendi|vendeu|comprei|comprou|dormia|trabalhava|morava|cuidava)\b/i;
+
+/** Ano, idade ou mês nomeado. */
+const MARCA_DE_TEMPO =
+  /\b(?:19|20)\d{2}\b|\b\d{1,2}\s+anos\b|\baos\s+\d{1,2}\b|\b(?:janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\b/i;
+
 /**
- * Heurística barata, antes de gastar chamada. Planejamento Seção 3.3.
- * Devolve `null` quando não sabe decidir, e aí o modelo decide.
+ * Nome próprio que não abre frase: "em Pelotas", "meu sócio Rafa".
+ *
+ * Um só teste cobre lugar e pessoa, e cobre os dois do jeito que o Prompt Mãe
+ * cobra: o que ancora a resposta é o lugar nomeado e a gente nomeada, não o
+ * substantivo genérico.
  */
-export function heuristicaCena(texto: string): boolean | null {
+const NOME_PROPRIO = /(?<=[a-zà-ÿ,]\s)(?!De\b|Da\b|Do\b)[A-ZÀ-Ý][a-zà-ÿ]{2,}/u;
+
+/**
+ * O portão da repescagem, Prompt Mãe Seção 2. Devolve true quando repesca.
+ *
+ * Os três critérios precisam bater juntos, e o primeiro (só P1 e P2) mora no
+ * `repescagem` de cada pergunta em `lib/copy.ts`. Aqui rodam os outros dois:
+ * resposta curta ou lista sem verbo, e resposta puramente conceitual.
+ *
+ * A régua que governa tudo isto é "na dúvida, não pergunta", e o normal é zero
+ * repescagem no fluxo inteiro. Por isso o portão é uma conjunção e não uma
+ * disjunção: qualquer coordenada que apareça, e a resposta passa.
+ *
+ * DESVIO. O documento escreve "nenhuma pessoa" no terceiro critério, e o
+ * exemplo canônico de resposta ruim da própria P1 ("mudança de cidade,
+ * falecimento do meu pai, destravamento do autoconhecimento") tem "meu pai"
+ * dentro. Lido ao pé da letra, o critério salvaria justamente a resposta que o
+ * documento usa como modelo do que repescar. O que se lê aqui é a pessoa que
+ * ancora a resposta, quer dizer, a nomeada, porque "meu pai" dentro de uma
+ * nominalização sem verbo continua sendo conceito, que é o que "puramente
+ * conceitual" quer dizer.
+ *
+ * A chamada de modelo que existia aqui saiu junto. Ela respondia a pergunta da
+ * régua velha ("tem cena?"), que era difusa e por isso precisava de julgamento.
+ * A régua nova é contável, e tirar a chamada tira um provedor do caminho entre
+ * uma pergunta e a outra, que é onde o cara está parado olhando pra tela.
+ */
+export function precisaRepescagem(texto: string): boolean {
   const limpo = texto.trim();
   const n = limpo.split(/\s+/).filter(Boolean).length;
 
-  if (n < 15) return false;
+  const temVerbo = VERBO_DE_ACAO.test(limpo);
 
-  // Lista de tópicos: várias vírgulas e nenhum verbo conjugado reconhecível.
-  const temVerbo =
-    /\b(?:fui|foi|era|eram|estava|tinha|fiz|fez|saí|saiu|falei|falou|disse|contei|contou|nasceu|morreu|comecei|começou|parei|parou|decidi|decidiu|pedi|pediu|mudei|mudou|voltei|voltou|perdi|perdeu|casei|casou|larguei|largou|briguei|brigou|recusei|recusou|aceitei|aceitou|dormia|trabalhava|morava)\b/i.test(
-      limpo,
-    );
+  /**
+   * Critério 2: menos de umas 25 palavras, ou lista de tópicos sem verbo.
+   *
+   * O que faz de uma coisa uma lista é o tamanho dos itens, não a quantidade de
+   * vírgulas. "Se ele escreveu bastante, não repesca, mesmo que falte uma
+   * coordenada": um parágrafo corrido de cinquenta palavras sem verbo de ação
+   * tem quatro vírgulas e continua sendo texto, com material de sobra pra
+   * leitura. Só a vírgula por régua transformava esse parágrafo em tópico.
+   */
+  const itens = limpo.split(',').map((p) => p.trim()).filter(Boolean);
+  const palavrasPorItem = itens.length > 0 ? n / itens.length : n;
+  const listaSemVerbo = itens.length >= 3 && palavrasPorItem <= 5 && !temVerbo;
 
-  const virgulas = (limpo.match(/,/g) ?? []).length;
-  if (virgulas >= 2 && !temVerbo) return false;
+  const curto = n < 25;
+  if (!curto && !listaSemVerbo) return false;
 
-  // Ano ou mês nomeado, mais um verbo de ação: cena quase certa.
-  const temTempo =
-    /\b(?:19|20)\d{2}\b|\b\d{1,2}\s+anos\b|\b(?:janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\b/i.test(
-      limpo,
-    );
+  // Critério 3: puramente conceitual, sem nenhuma coordenada.
+  if (temVerbo) return false;
+  if (MARCA_DE_TEMPO.test(limpo)) return false;
+  if (NOME_PROPRIO.test(limpo)) return false;
 
-  if (temTempo && temVerbo && n >= 25) return true;
-
-  return null;
-}
-
-/**
- * Chamada curta quando a heurística não decide.
- *
- * Raciocínio desligado e esforço baixo de propósito: a pergunta é binária e o
- * usuário está esperando na tela entre uma pergunta e a outra. Aqui latência
- * vale mais que profundidade.
- */
-export async function checarCenaComModelo(texto: string): Promise<boolean> {
-  const msg = await provedor().chamar({
-    system: SYSTEM_CHECAGEM_CENA,
-    mensagens: [{ role: 'user', content: `${PERGUNTA_CHECAGEM_CENA}\n\n${texto}` }],
-    maxTokens: 64,
-    esforco: 'low',
-    pensar: false,
-    json: false,
-  });
-  return /\bsim\b/i.test(msg.texto);
-}
-
-export async function precisaRepescagem(texto: string): Promise<boolean> {
-  const rapido = heuristicaCena(texto);
-  if (rapido !== null) return !rapido;
-
-  try {
-    return !(await checarCenaComModelo(texto));
-  } catch {
-    // Se a checagem falhar, segue sem repescagem. Travar o cara por causa de um
-    // erro de rede é pior que perder uma repescagem.
-    return false;
-  }
+  return true;
 }

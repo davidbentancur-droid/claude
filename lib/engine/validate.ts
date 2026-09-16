@@ -151,6 +151,52 @@ const FORMULA_NAO_E: RegExp[] = [
 /** Guarda contra dupla negação, que não é a fórmula. */
 const DUPLA_NEGACAO = /\bn[ãa]o\s+(?:é|era|foi)\b[^.!?;]{0,80}\be\s+n[ãa]o\s+(?:é|era|foi)\b/i;
 
+/**
+ * Prompt Mãe Seção 5, batidas 3 e 4 do bloco do Ato, e item 14 do checklist.
+ *
+ * A armadilha e o convite são o que ele guarda da leitura, e por isso vão em
+ * linha própria com rótulo em negrito. Diluídos dentro do parágrafo corrido,
+ * apagam os dois. O regex aceita o negrito por fora dos dois pontos e por
+ * dentro, porque a diferença não muda nada na tela.
+ */
+const ROTULOS_ATO: { rotulo: string; re: RegExp }[] = [
+  { rotulo: 'A armadilha:', re: /^\s*\*\*\s*A\s+armadilha\s*:?\s*\*\*\s*:?/im },
+  { rotulo: 'O convite:', re: /^\s*\*\*\s*O\s+convite\s*:?\s*\*\*\s*:?/im },
+];
+
+/**
+ * Proporção do Prompt Mãe Seção 5: o Ato e o Movimento juntos ocupam cerca de
+ * dois terços do dossiê, e o que sobra cede espaço, nunca eles.
+ *
+ * Suave, e o piso é generoso, porque "cerca de" não é número. O que isto pega é
+ * a falha registrada no Teste 1, Ato raso com o arquétipo comendo o dossiê, e
+ * não a variação de dez palavras. Dura, ela brigaria com a régua de tamanho: as
+ * duas mandando cortar em direções opostas viram laço de retry.
+ */
+const PISO_ATO_MOVIMENTO = 0.55;
+
+/**
+ * Teto por bloco, a mesma tabela do contrato em `contract.ts`.
+ *
+ * Só roda quando o total já estourou, porque bloco grande com total dentro da
+ * faixa é o "cerca de" da Seção 5 trabalhando, e reprovar isso seria briga com
+ * o próprio documento.
+ *
+ * Existe porque "o dossiê está com 497 palavras, corta" não diz onde cortar, e
+ * o modelo corta do lugar errado. Medido contra a fixture do Marcelo: o Ato e o
+ * Movimento saíram nos 137 e 140 que a Seção 5 pede, e o estouro inteiro estava
+ * na devolutiva com 81 e no fechamento com 78, onde o documento pede 50 e 60.
+ * Nomear o bloco é a diferença entre um retry que conserta e um que reescreve.
+ */
+const TETOS: { campo: keyof Leitura['dossie']; rotulo: string; teto: number }[] = [
+  { campo: 'titulo', rotulo: 'o título', teto: 8 },
+  { campo: 'devolutiva', rotulo: 'a devolutiva', teto: 52 },
+  { campo: 'ato_texto', rotulo: 'o bloco do Ato', teto: 126 },
+  { campo: 'movimento_texto', rotulo: 'o bloco do Movimento', teto: 135 },
+  { campo: 'arquetipo_texto', rotulo: 'o bloco do arquétipo', teto: 50 },
+  { campo: 'fechamento', rotulo: 'o fechamento', teto: 62 },
+];
+
 /* ------------------------------------------------------------------ */
 /* Validação                                                           */
 /* ------------------------------------------------------------------ */
@@ -220,7 +266,7 @@ export function validar(leitura: Leitura, respostas: Respostas): Resultado {
   /* --- contagem ------------------------------------------------- */
 
   const n = palavrasDossie(leitura);
-  const [min, max] = leitura.material_fino ? [250, 320] : [300, 400];
+  const [min, max] = leitura.material_fino ? [250, 320] : [320, 420];
   if (n < min || n > max) {
     dura(
       'tamanho_dossie',
@@ -228,6 +274,17 @@ export function validar(leitura: Leitura, respostas: Respostas): Resultado {
         leitura.material_fino ? ' (material fino)' : ''
       }. Conta o título mais os cinco blocos.`,
     );
+  }
+
+  if (n > max) {
+    for (const { campo, rotulo, teto } of TETOS) {
+      const nb = contarPalavras(leitura.dossie[campo]);
+      if (nb <= teto) continue;
+      dura(
+        'teto_bloco',
+        `Dentro dele, ${rotulo} está com ${nb} palavras e o teto é ${teto}. Tira ${nb - teto} palavras daí.`,
+      );
+    }
   }
 
   const ns = contarPalavras(leitura.spoiler);
@@ -342,6 +399,36 @@ export function validar(leitura: Leitura, respostas: Respostas): Resultado {
     );
   }
 
+  /* --- forma do Ato e do Movimento --------------------------------- */
+
+  for (const { rotulo, re } of ROTULOS_ATO) {
+    if (re.test(leitura.dossie.ato_texto)) continue;
+    dura(
+      'rotulo_ato',
+      `O bloco do Ato não tem o rótulo "${rotulo}" em linha própria e em negrito. Escreve a linha começando com **${rotulo}** e o resto da frase depois, escrita com a cena dele.`,
+    );
+  }
+
+  /**
+   * O nome do Movimento em negrito. Prompt Mãe Seção 5: "Sempre um Movimento
+   * nomeado, nunca só descrito".
+   *
+   * A frase oficial do card, que a Seção 5 pede junto, não é conferida aqui e
+   * não é pedida no contrato: ela vem do kit de arte, que ainda não existe, e a
+   * própria Seção 7 prevê o caso mostrando só o nome quando não há card. Inventar
+   * frase de card é pior que não ter.
+   */
+  const nomeEmNegrito = new RegExp(
+    `\\*\\*\\s*${leitura.movimento.nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\*\\*`,
+    'i',
+  );
+  if (!nomeEmNegrito.test(leitura.dossie.movimento_texto)) {
+    dura(
+      'movimento_negrito',
+      `O bloco do Movimento não abre com **${leitura.movimento.nome}** em negrito, na primeira linha, sozinho. Escreve o nome assim e quebra a linha antes do resto do bloco.`,
+    );
+  }
+
   /* --- movimento --------------------------------------------------- */
 
   if (!paresBatem(leitura.movimento.numero, leitura.movimento.nome)) {
@@ -397,6 +484,15 @@ export function validar(leitura: Leitura, respostas: Respostas): Resultado {
     leitura.dossie.movimento_subtitulo,
     leitura.dossie.arquetipo_subtitulo,
   ].filter((s) => s.trim().length > 0);
+
+  const peso =
+    contarPalavras(leitura.dossie.ato_texto) + contarPalavras(leitura.dossie.movimento_texto);
+  if (n > 0 && peso / n < PISO_ATO_MOVIMENTO) {
+    suave(
+      'peso_ato_movimento',
+      `O Ato e o Movimento juntos são ${Math.round((peso / n) * 100)}% do dossiê e precisam ficar perto de dois terços. Aprofunda os dois e corta do arquétipo e da devolutiva.`,
+    );
+  }
 
   if (subtitulos.length > 3) suave('subtitulos', 'No máximo três subtítulos.');
   if (/:/.test(leitura.dossie.titulo)) suave('titulo', 'Título sem dois pontos explicativos.');

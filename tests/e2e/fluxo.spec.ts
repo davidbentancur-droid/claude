@@ -18,29 +18,36 @@ const PERGUNTAS = [
   'Se daqui a dois anos nada disso tiver mudado',
 ];
 
-test('abertura não pede dado nenhum e não menciona IA', async ({ page }) => {
+test('a tela da oferta promete o dossiê inteiro e não pede dado nenhum', async ({ page }) => {
   await page.goto('/');
 
   await expect(page.getByRole('button', { name: 'Começar' })).toBeVisible();
-  await expect(
-    page.getByText('Nenhum dado é pedido antes da leitura estar pronta.'),
-  ).toBeVisible();
+
+  const main = page.locator('main');
+  // A promessa da Tela 1, item por item. É ela que o dossiê tem que cumprir.
+  await expect(main).toContainText('qual é a armadilha desse ponto e qual é o convite dele');
+  await expect(main).toContainText('o gesto que a tua vida vem repetindo há anos');
+  await expect(main).toContainText('Uns oito minutos, escrevendo ou falando.');
 
   const texto = (await page.locator('body').innerText()).toLowerCase();
   for (const proibida of ['inteligência artificial', ' ia ', 'quiz', 'teste', 'resultado']) {
     expect(texto).not.toContain(proibida);
   }
+  // A régua das duas telas: a Tela 1 nunca explica o método.
+  expect(texto).not.toContain('arquétipo');
   expect(await page.locator('input, textarea').count()).toBe(0);
 });
 
-test('o enquadramento chega inteiro, com o exemplo de cena', async ({ page }) => {
+test('a tela de como responder chega inteira, com o exemplo de cena', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Começar' }).click();
 
   const main = page.locator('main');
-  await expect(main).toContainText('o que eu preciso aqui é cena, não resumo');
+  await expect(main).toContainText('me dá cena, não resumo');
   // A parte que um split ingênuo na palavra "cena" comeria.
   await expect(main).toContainText('Duas cenas bem contadas valem mais que dez tópicos.');
+  // Ela nunca repete a promessa da Tela 1.
+  await expect(main).not.toContainText('armadilha');
 });
 
 test('as quatro perguntas aparecem na ordem, com o contador', async ({ page }) => {
@@ -76,7 +83,9 @@ test('as quatro perguntas aparecem na ordem, com o contador', async ({ page }) =
   });
 });
 
-test('a repescagem aparece uma vez na P1 e não volta na segunda', async ({ page }) => {
+test('a repescagem é uma no fluxo inteiro: gasta na P1 e a P2 segue sem ela', async ({
+  page,
+}) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Começar' }).click();
   await page.getByRole('button', { name: 'Entendi, vamos' }).click();
@@ -99,8 +108,22 @@ test('a repescagem aparece uma vez na P1 e não volta na segunda', async ({ page
     .fill('em 2019 eu saí da empresa depois de uma briga com meu sócio em Porto Alegre');
   await page.getByRole('button', { name: 'Enviar' }).click();
 
-  // Segue pra P2, sem segunda repescagem.
+  // Segue pra P2, sem segunda repescagem na própria P1.
   await expect(page.getByText('2 de 4')).toBeVisible({ timeout: 20_000 });
+
+  /*
+   * A cota é do fluxo, Prompt Mãe Seção 2. Esta resposta da P2 é o "assim não"
+   * da própria pergunta e passaria no portão sozinha, mas a P1 já gastou a
+   * única repescagem, então a P2 segue com o que veio.
+   */
+  await page
+    .locator('textarea')
+    .first()
+    .fill('tenho buscado mais equilíbrio e presença, mas o trabalho consome');
+  await page.getByRole('button', { name: 'Enviar' }).click();
+
+  await expect(page.getByText('3 de 4')).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('main')).not.toContainText('Me dá um dia, um lugar');
 });
 
 test('a P4 não tem repescagem, mesmo com resposta curta', async ({ page }) => {

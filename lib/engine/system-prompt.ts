@@ -34,12 +34,9 @@ export function systemPrompt(): string {
   return promptMae() + CONTRATO_JSON;
 }
 
-/**
- * Prompt curto da repescagem. Planejamento Seção 3.3, usado só quando a
- * heurística barata não decide sozinha.
+/*
+ * O prompt curto da checagem de cena morava aqui e saiu junto com a chamada que
+ * o usava. O portão de repescagem do Prompt Mãe Seção 2 virou contável, e quem
+ * decide agora é `precisaRepescagem` em `lib/engine/read.ts`, sem modelo no
+ * caminho entre uma pergunta e a outra.
  */
-export const SYSTEM_CHECAGEM_CENA =
-  'Tu avalia respostas de um questionário em português brasileiro. Cena é uma coisa que aconteceu num dia, com lugar e gente dentro. Responde só SIM ou NAO, sem pontuação e sem explicação.';
-
-export const PERGUNTA_CHECAGEM_CENA =
-  'Esta resposta tem pelo menos uma cena com dia ou ano, lugar e pessoa? Responde só SIM ou NAO.';

@@ -5,16 +5,16 @@ import { checarRisco } from '@/lib/engine/risk';
 import { atualizarStatus, lerCookieSessao } from '@/lib/session';
 
 export const runtime = 'nodejs';
-export const maxDuration = 30;
+export const maxDuration = 15;
 
 /**
- * Regra de resposta pobre, Prompt Mãe Seção 2.
+ * Portão da repescagem, Prompt Mãe Seção 2.
  *
- * Heurística barata primeiro, modelo só quando ela não decide. Roda também o
- * pré-filtro de risco, que é o que permite interromper na P1 em vez de esperar
- * as quatro respostas.
+ * A decisão é contável e roda aqui mesmo, sem chamar modelo nenhum. Roda também
+ * o pré-filtro de risco, que é o que permite interromper na P1 em vez de esperar
+ * as quatro respostas, e é ele que justifica a rota continuar existindo.
  *
- * P3 nunca chega aqui: a pergunta é curta por desenho e o cliente não chama.
+ * P3 e P4 nunca chegam aqui: pedem frase, não cena, e o cliente não chama.
  */
 export async function POST(req: Request) {
   const sessionId = await lerCookieSessao();
@@ -41,8 +41,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const precisa = await precisaRepescagem(texto);
-    return NextResponse.json({ needs_followup: precisa, risco: false });
+    return NextResponse.json({ needs_followup: precisaRepescagem(texto), risco: false });
   } catch (e) {
     console.error('[check-answer] falhou', e);
     // Erro aqui não pode travar o fluxo. Sem repescagem, segue.
