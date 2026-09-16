@@ -1,6 +1,6 @@
 import { normalizarAspas, trechosCitados } from '../citacoes';
 import { paresBatem } from '../movimentos';
-import type { Leitura } from './schema';
+import type { Analise, DossieLeitura, Leitura } from './schema';
 
 /**
  * Validação pós geração. Planejamento Seção 3.2, checklist do Prompt Mãe Seção 10.
@@ -201,8 +201,7 @@ const TETOS: { campo: keyof Leitura['dossie']; rotulo: string; teto: number }[] 
 /* Validação                                                           */
 /* ------------------------------------------------------------------ */
 
-function camposDossie(l: Leitura): string[] {
-  const d = l.dossie;
+function camposDossie(d: DossieLeitura): string[] {
   return [
     d.titulo,
     d.devolutiva,
@@ -217,8 +216,7 @@ function camposDossie(l: Leitura): string[] {
 }
 
 /** Planejamento Seção 3.2: contagem dos 5 blocos mais o título. */
-function palavrasDossie(l: Leitura): number {
-  const d = l.dossie;
+function palavrasDossie(d: DossieLeitura): number {
   return [
     d.titulo,
     d.devolutiva,
@@ -247,38 +245,207 @@ function semCitacoesDele(texto: string, respostas: Respostas): string {
   return saida;
 }
 
-export function validar(leitura: Leitura, respostas: Respostas): Resultado {
+/** Fábrica dos coletores, compartilhada pelos dois validadores. */
+function coletor() {
   const duras: Falha[] = [];
   const suaves: Falha[] = [];
+  return {
+    duras,
+    suaves,
+    dura: (regra: string, mensagem: string) =>
+      duras.push({ regra, severidade: 'dura' as const, mensagem }),
+    suave: (regra: string, mensagem: string) =>
+      suaves.push({ regra, severidade: 'suave' as const, mensagem }),
+    fechar: (): Resultado => ({ ok: duras.length === 0, duras, suaves }),
+  };
+}
 
-  const dura = (regra: string, mensagem: string) =>
-    duras.push({ regra, severidade: 'dura', mensagem });
-  const suave = (regra: string, mensagem: string) =>
-    suaves.push({ regra, severidade: 'suave', mensagem });
+/* ------------------------------------------------------------------ */
+/* Chamada 1 · a análise e o spoiler                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * O que a chamada 1 pode errar, e só isso.
+ *
+ * Separar importa por causa do retry: mandar de volta pra chamada 1 um erro de
+ * contagem de palavras do dossiê faria ela refazer a análise inteira por causa
+ * de um problema que não é dela. Cada metade só recebe o que consegue consertar.
+ */
+export function validarAnalise(analise: Analise, respostas: Respostas): Resultado {
+  const { dura, suave, fechar } = coletor();
 
   const todasRespostas = [respostas.p1, respostas.p2, respostas.p3, respostas.p4].join(
     ' \n ',
   );
-  const textoDossie = camposDossie(leitura).join('\n\n');
+  const spoilerLimpo = semCitacoesDele(analise.spoiler, respostas);
+
+  /* --- tamanho do spoiler ------------------------------------------ */
+
+  const ns = contarPalavras(analise.spoiler);
+  if (ns < 90 || ns > 130) {
+    dura(
+      'tamanho_spoiler',
+      `O spoiler está com ${ns} palavras e precisa ficar entre 90 e 130. Conta os pontos finais: o teto é seis frases.`,
+    );
+  }
+
+  /* --- estilo do spoiler -------------------------------------------- */
+
+  if (/[—–]/.test(spoilerLimpo)) {
+    dura(
+      'travessao',
+      'Tem travessão no spoiler. Troca cada um por vírgula, ponto, dois pontos ou quebra de linha.',
+    );
+  }
+
+  if (!DUPLA_NEGACAO.test(spoilerLimpo) && FORMULA_NAO_E.some((re) => re.test(spoilerLimpo))) {
+    dura(
+      'formula_nao_e',
+      'Tem a fórmula "não é X, é Y" no spoiler. Fala a coisa direto, sem a negação que prepara a afirmação.',
+    );
+  }
+
+  for (const { termo, re } of JARGAO) {
+    if (re.test(spoilerLimpo)) {
+      dura(
+        'jargao',
+        `A palavra "${termo}" não pode aparecer no spoiler. O conceito entra, a palavra fica fora.`,
+      );
+    }
+  }
+
+  for (const { termo, re } of [...BANIDAS, ...META_PRODUTO]) {
+    if (re.test(spoilerLimpo)) dura('banida', `Tira "${termo}" do spoiler.`);
+  }
+
+  const vocabularioDele = normalizar(todasRespostas);
+  for (const { termo, re } of DIAGNOSTICO) {
+    if (!re.test(spoilerLimpo)) continue;
+    if (re.test(vocabularioDele)) continue;
+    dura(
+      'diagnostico',
+      `"${termo}" é categoria clínica e não entra no spoiler. Descreve o que ele contou, com os fatos dele.`,
+    );
+  }
+
+  /* --- ecos --------------------------------------------------------- */
+
+  if (analise.ecos.length !== 2) {
+    dura('ecos_quantidade', 'São exatamente duas histórias, nunca mais, nunca menos.');
+  } else if (analise.ecos[0].tradicao === analise.ecos[1].tradicao) {
+    dura(
+      'ecos_tradicao',
+      `As duas histórias vieram da mesma tradição (${analise.ecos[0].tradicao}). Elas têm que vir de tradições que não se conheceram.`,
+    );
+  }
+
+  /**
+   * O eco precisa contar o que acontece, não só nomear a história.
+   *
+   * Virou regra dura quando a leitura foi partida em duas: a chamada 2 não tem
+   * outra fonte pra desenvolver o eco, e "Odisseu na jangada" em três palavras
+   * força ela a inventar o resto, que é exatamente o que a régua de
+   * rastreabilidade do Passo 5 proíbe.
+   */
+  for (const eco of analise.ecos) {
+    if (contarPalavras(eco.historia) >= 6) continue;
+    dura(
+      'eco_raso',
+      `O eco "${eco.historia}" só tem o nome da história. Escreve em uma ou duas linhas o que acontece nela, porque é esse resumo que vira o texto do dossiê.`,
+    );
+  }
+
+  /* --- movimento ----------------------------------------------------- */
+
+  if (!paresBatem(analise.movimento.numero, analise.movimento.nome)) {
+    dura(
+      'movimento_par',
+      `O par ${analise.movimento.numero} e "${analise.movimento.nome}" não existe no banco dos 20. Confere o número e o nome.`,
+    );
+  }
+
+  if (analise.material_fino && !analise.movimento.aposta) {
+    suave(
+      'aposta',
+      'Material fino pede o Movimento como aposta declarada, com "aposta" em true.',
+    );
+  }
+
+  /* --- vazamento no spoiler ------------------------------------------ */
+
+  const vazou: string[] = [];
+  const spoiler = normalizarAspas(analise.spoiler);
+
+  // Nome do Movimento. Checa a forma capitalizada, porque "a prova já começou"
+  // é português e "o Movimento é a Prova" é vazamento.
+  const nomeMov = analise.movimento.nome;
+  const reMov = new RegExp(`\\b${nomeMov.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
+  if (reMov.test(spoiler)) vazou.push(`o nome do Movimento (${nomeMov})`);
+
+  for (const a of ['Rei', 'Guerreiro', 'Mago', 'Amante']) {
+    if (new RegExp(`\\b${a}\\b`).test(spoiler)) vazou.push(`o arquétipo ${a}`);
+  }
+
+  if (/\bv[íi]deo\b/i.test(spoiler)) vazou.push('a menção ao vídeo');
+
+  if (analise.pratica.length > 20 && maiorTrechoComum(spoiler, analise.pratica) >= 5) {
+    vazou.push('a prática');
+  }
+
+  if (vazou.length > 0) {
+    dura(
+      'spoiler_vaza',
+      `O spoiler entregou ${vazou.join(', ')}. Ele esconde o Movimento, o arquétipo, a prática, a armadilha, o convite e o desfecho das histórias.`,
+    );
+  }
+
+  if (/\{\{(?:NOME|PROFISSAO)\}\}/.test(analise.spoiler)) {
+    dura('spoiler_placeholder', 'O spoiler não leva {{NOME}} nem {{PROFISSAO}}.');
+  }
+
+  /* --- suaves -------------------------------------------------------- */
+
+  if (contarPalavras(analise.pratica) > 45)
+    suave('pratica', 'A prática tem que caber em uma frase.');
+  if (analise.arquetipos.some((a) => a.estado.trim().length === 0))
+    suave('estado', 'Cada arquétipo leva o nome do estado entre parênteses.');
+
+  return fechar();
+}
+
+/* ------------------------------------------------------------------ */
+/* Chamada 2 · o dossiê                                                */
+/* ------------------------------------------------------------------ */
+
+export function validarDossie(
+  dossie: DossieLeitura,
+  analise: Pick<Analise, 'material_fino' | 'movimento'>,
+  respostas: Respostas,
+): Resultado {
+  const { dura, suave, fechar } = coletor();
+
+  const todasRespostas = [respostas.p1, respostas.p2, respostas.p3, respostas.p4].join(
+    ' \n ',
+  );
+  const textoDossie = camposDossie(dossie).join('\n\n');
   const limpo = semCitacoesDele(textoDossie, respostas);
-  const spoilerLimpo = semCitacoesDele(leitura.spoiler, respostas);
 
   /* --- contagem ------------------------------------------------- */
 
-  const n = palavrasDossie(leitura);
-  const [min, max] = leitura.material_fino ? [250, 320] : [320, 420];
+  const n = palavrasDossie(dossie);
+  const [min, max] = analise.material_fino ? [250, 320] : [320, 420];
   if (n < min || n > max) {
     dura(
       'tamanho_dossie',
       `O dossiê está com ${n} palavras e precisa ficar entre ${min} e ${max}${
-        leitura.material_fino ? ' (material fino)' : ''
+        analise.material_fino ? ' (material fino)' : ''
       }. Conta o título mais os cinco blocos.`,
     );
   }
 
   if (n > max) {
     for (const { campo, rotulo, teto } of TETOS) {
-      const nb = contarPalavras(leitura.dossie[campo]);
+      const nb = contarPalavras(dossie[campo]);
       if (nb <= teto) continue;
       dura(
         'teto_bloco',
@@ -287,17 +454,9 @@ export function validar(leitura: Leitura, respostas: Respostas): Resultado {
     }
   }
 
-  const ns = contarPalavras(leitura.spoiler);
-  if (ns < 90 || ns > 130) {
-    dura(
-      'tamanho_spoiler',
-      `O spoiler está com ${ns} palavras e precisa ficar entre 90 e 130.`,
-    );
-  }
-
   /* --- estilo ---------------------------------------------------- */
 
-  const comTravessao = [...camposDossie(leitura), leitura.spoiler].filter((c) =>
+  const comTravessao = camposDossie(dossie).filter((c) =>
     /[—–]/.test(semCitacoesDele(c, respostas)),
   );
   if (comTravessao.length > 0) {
@@ -307,28 +466,24 @@ export function validar(leitura: Leitura, respostas: Respostas): Resultado {
     );
   }
 
-  for (const alvo of [limpo, spoilerLimpo]) {
-    if (DUPLA_NEGACAO.test(alvo)) continue;
-    const bateu = FORMULA_NAO_E.find((re) => re.test(alvo));
-    if (bateu) {
-      dura(
-        'formula_nao_e',
-        'Tem a fórmula "não é X, é Y" no texto. Fala a coisa direto, sem a negação que prepara a afirmação.',
-      );
-      break;
-    }
+  if (!DUPLA_NEGACAO.test(limpo) && FORMULA_NAO_E.some((re) => re.test(limpo))) {
+    dura(
+      'formula_nao_e',
+      'Tem a fórmula "não é X, é Y" no texto. Fala a coisa direto, sem a negação que prepara a afirmação.',
+    );
   }
 
   for (const { termo, re } of JARGAO) {
-    if (re.test(limpo) || re.test(spoilerLimpo)) {
-      dura('jargao', `A palavra "${termo}" não pode aparecer. O conceito entra, a palavra fica fora.`);
+    if (re.test(limpo)) {
+      dura(
+        'jargao',
+        `A palavra "${termo}" não pode aparecer. O conceito entra, a palavra fica fora.`,
+      );
     }
   }
 
   for (const { termo, re } of [...BANIDAS, ...META_PRODUTO]) {
-    if (re.test(limpo) || re.test(spoilerLimpo)) {
-      dura('banida', `Tira "${termo}" do texto.`);
-    }
+    if (re.test(limpo)) dura('banida', `Tira "${termo}" do texto.`);
   }
 
   /**
@@ -342,7 +497,7 @@ export function validar(leitura: Leitura, respostas: Respostas): Resultado {
   const vocabularioDele = normalizar(todasRespostas);
 
   for (const { termo, re } of DIAGNOSTICO) {
-    if (!(re.test(limpo) || re.test(spoilerLimpo))) continue;
+    if (!re.test(limpo)) continue;
     if (re.test(vocabularioDele)) continue;
 
     dura(
@@ -380,7 +535,7 @@ export function validar(leitura: Leitura, respostas: Respostas): Resultado {
    * telefone, e achando que é normal". Elidir o meio é citação honesta. Aqui a
    * régua é uma sequência de pelo menos 4 palavras consecutivas da P4.
    */
-  const ancora = maiorTrechoComum(leitura.dossie.fechamento, respostas.p4);
+  const ancora = maiorTrechoComum(dossie.fechamento, respostas.p4);
   if (ancora < 4) {
     dura(
       'fechamento_p4',
@@ -388,21 +543,10 @@ export function validar(leitura: Leitura, respostas: Respostas): Resultado {
     );
   }
 
-  /* --- ecos -------------------------------------------------------- */
-
-  if (leitura.ecos.length !== 2) {
-    dura('ecos_quantidade', 'São exatamente duas histórias, nunca mais, nunca menos.');
-  } else if (leitura.ecos[0].tradicao === leitura.ecos[1].tradicao) {
-    dura(
-      'ecos_tradicao',
-      `As duas histórias vieram da mesma tradição (${leitura.ecos[0].tradicao}). Elas têm que vir de tradições que não se conheceram.`,
-    );
-  }
-
   /* --- forma do Ato e do Movimento --------------------------------- */
 
   for (const { rotulo, re } of ROTULOS_ATO) {
-    if (re.test(leitura.dossie.ato_texto)) continue;
+    if (re.test(dossie.ato_texto)) continue;
     dura(
       'rotulo_ato',
       `O bloco do Ato não tem o rótulo "${rotulo}" em linha própria e em negrito. Escreve a linha começando com **${rotulo}** e o resto da frase depois, escrita com a cena dele.`,
@@ -415,78 +559,29 @@ export function validar(leitura: Leitura, respostas: Respostas): Resultado {
    *
    * A frase oficial do card, que a Seção 5 pede junto, não é conferida aqui e
    * não é pedida no contrato: ela vem do kit de arte, que ainda não existe, e a
-   * própria Seção 7 prevê o caso mostrando só o nome quando não há card. Inventar
-   * frase de card é pior que não ter.
+   * própria Seção 7 prevê o caso mostrando só o nome quando não há card.
+   * Inventar frase de card é pior que não ter.
    */
   const nomeEmNegrito = new RegExp(
-    `\\*\\*\\s*${leitura.movimento.nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\*\\*`,
+    `\\*\\*\\s*${analise.movimento.nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\*\\*`,
     'i',
   );
-  if (!nomeEmNegrito.test(leitura.dossie.movimento_texto)) {
+  if (!nomeEmNegrito.test(dossie.movimento_texto)) {
     dura(
       'movimento_negrito',
-      `O bloco do Movimento não abre com **${leitura.movimento.nome}** em negrito, na primeira linha, sozinho. Escreve o nome assim e quebra a linha antes do resto do bloco.`,
+      `O bloco do Movimento não abre com **${analise.movimento.nome}** em negrito, na primeira linha, sozinho. Escreve o nome assim e quebra a linha antes do resto do bloco.`,
     );
-  }
-
-  /* --- movimento --------------------------------------------------- */
-
-  if (!paresBatem(leitura.movimento.numero, leitura.movimento.nome)) {
-    dura(
-      'movimento_par',
-      `O par ${leitura.movimento.numero} e "${leitura.movimento.nome}" não existe no banco dos 20. Confere o número e o nome.`,
-    );
-  }
-
-  if (leitura.material_fino && !leitura.movimento.aposta) {
-    suave(
-      'aposta',
-      'Material fino pede o Movimento como aposta declarada, com "aposta" em true.',
-    );
-  }
-
-  /* --- vazamento no spoiler ---------------------------------------- */
-
-  const vazou: string[] = [];
-  const spoiler = normalizarAspas(leitura.spoiler);
-
-  // Nome do Movimento. Checa a forma capitalizada, porque "a prova já começou"
-  // é português e "o Movimento é a Prova" é vazamento.
-  const nomeMov = leitura.movimento.nome;
-  const reMov = new RegExp(`\\b${nomeMov.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
-  if (reMov.test(spoiler)) vazou.push(`o nome do Movimento (${nomeMov})`);
-
-  for (const a of ['Rei', 'Guerreiro', 'Mago', 'Amante']) {
-    if (new RegExp(`\\b${a}\\b`).test(spoiler)) vazou.push(`o arquétipo ${a}`);
-  }
-
-  if (/\bv[íi]deo\b/i.test(spoiler)) vazou.push('a menção ao vídeo');
-
-  if (leitura.pratica.length > 20 && maiorTrechoComum(spoiler, leitura.pratica) >= 5) {
-    vazou.push('a prática');
-  }
-
-  if (vazou.length > 0) {
-    dura(
-      'spoiler_vaza',
-      `O spoiler entregou ${vazou.join(', ')}. Ele esconde o Movimento, o arquétipo, a prática, a armadilha, o convite e o desfecho das histórias.`,
-    );
-  }
-
-  if (/\{\{(?:NOME|PROFISSAO)\}\}/.test(leitura.spoiler)) {
-    dura('spoiler_placeholder', 'O spoiler não leva {{NOME}} nem {{PROFISSAO}}.');
   }
 
   /* --- suaves ------------------------------------------------------- */
 
   const subtitulos = [
-    leitura.dossie.ato_subtitulo,
-    leitura.dossie.movimento_subtitulo,
-    leitura.dossie.arquetipo_subtitulo,
+    dossie.ato_subtitulo,
+    dossie.movimento_subtitulo,
+    dossie.arquetipo_subtitulo,
   ].filter((s) => s.trim().length > 0);
 
-  const peso =
-    contarPalavras(leitura.dossie.ato_texto) + contarPalavras(leitura.dossie.movimento_texto);
+  const peso = contarPalavras(dossie.ato_texto) + contarPalavras(dossie.movimento_texto);
   if (n > 0 && peso / n < PISO_ATO_MOVIMENTO) {
     suave(
       'peso_ato_movimento',
@@ -495,12 +590,26 @@ export function validar(leitura: Leitura, respostas: Respostas): Resultado {
   }
 
   if (subtitulos.length > 3) suave('subtitulos', 'No máximo três subtítulos.');
-  if (/:/.test(leitura.dossie.titulo)) suave('titulo', 'Título sem dois pontos explicativos.');
-  if (contarPalavras(leitura.pratica) > 45)
-    suave('pratica', 'A prática tem que caber em uma frase.');
-  if (leitura.arquetipos.some((a) => a.estado.trim().length === 0))
-    suave('estado', 'Cada arquétipo leva o nome do estado entre parênteses.');
+  if (/:/.test(dossie.titulo)) suave('titulo', 'Título sem dois pontos explicativos.');
 
+  return fechar();
+}
+
+/* ------------------------------------------------------------------ */
+/* Leitura inteira                                                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * As duas metades juntas. Usada pelo script de fixture e por qualquer checagem
+ * de uma leitura já montada. Em produção quem roda são as duas separadas, cada
+ * uma dentro da chamada dela.
+ */
+export function validar(leitura: Leitura, respostas: Respostas): Resultado {
+  const a = validarAnalise(leitura, respostas);
+  const d = validarDossie(leitura.dossie, leitura, respostas);
+
+  const duras = [...a.duras, ...d.duras];
+  const suaves = [...a.suaves, ...d.suaves];
   return { ok: duras.length === 0, duras, suaves };
 }
 

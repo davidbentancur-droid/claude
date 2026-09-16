@@ -1,6 +1,6 @@
 import { partirCitacoes, type Pedaco } from './citacoes';
 import { movimentoPorNumero, type Ato } from './movimentos';
-import type { Leitura } from './engine/schema';
+import type { Analise, Leitura } from './engine/schema';
 
 export { partirCitacoes };
 export type { Pedaco };
@@ -103,7 +103,7 @@ export function montarDossie(leitura: Leitura, lead: DadosLead): DossiePublico {
 }
 
 /** O que vai pro banco desnormalizado, pro momento do contato no WhatsApp. */
-export function resumoParaContato(leitura: Leitura) {
+export function resumoParaContato(leitura: Analise) {
   const a = leitura.arquetipos[0];
   return {
     ato: leitura.ato.nome,

@@ -86,6 +86,27 @@ async function main() {
   );
   tudoBem = ok('o dossiê NÃO vazou antes do lead', vazou.length === 0, vazou.join(', ')) && tudoBem;
 
+  /*
+   * A chamada 2, que é o que o navegador dispara sozinho quando o spoiler
+   * aparece. Aqui ela é esperada de propósito, pra o smoke medir o tempo dela e
+   * conferir que a resposta não traz texto nenhum da leitura. No fluxo real
+   * ninguém espera: ela roda enquanto o cara preenche o formulário.
+   */
+  const escrita = await chamar('/api/dossie', {});
+  tudoBem =
+    ok('dossiê escrito', escrita.status === 200, `${(escrita.ms / 1000).toFixed(1)}s`) &&
+    tudoBem;
+
+  const vazouNaEscrita = ['titulo', 'fechamento', 'devolutiva', 'ato_texto'].filter((c) =>
+    escrita.texto.includes(c),
+  );
+  tudoBem =
+    ok(
+      'a rota da escrita NÃO devolve o texto',
+      vazouNaEscrita.length === 0,
+      vazouNaEscrita.join(', '),
+    ) && tudoBem;
+
   const lead = await chamar('/api/lead', {
     nome: 'Marcelo',
     whatsapp: '(51) 99999-1234',

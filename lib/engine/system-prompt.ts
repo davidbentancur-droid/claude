@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { CONTRATO_JSON } from './contract';
+import { CONTRATO_ANALISE, CONTRATO_DOSSIE } from './contract';
 
 /**
  * System prompt = Prompt Mãe integral + contrato de saída.
@@ -30,8 +30,20 @@ export function promptMae(): string {
   return cache;
 }
 
-export function systemPrompt(): string {
-  return promptMae() + CONTRATO_JSON;
+/**
+ * As duas chamadas levam o Prompt Mãe integral e trocam só o contrato.
+ *
+ * Mandar o documento inteiro nas duas parece desperdício e não é: o prefixo é
+ * idêntico e os dois provedores fazem cache de prefixo, então a segunda chamada
+ * paga quase nada por ele. E a chamada 2 precisa das Seções 5, 9 e 10 na
+ * íntegra, que são justamente as que governam a escrita.
+ */
+export function systemAnalise(): string {
+  return promptMae() + CONTRATO_ANALISE;
+}
+
+export function systemDossie(): string {
+  return promptMae() + CONTRATO_DOSSIE;
 }
 
 /*

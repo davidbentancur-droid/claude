@@ -25,6 +25,20 @@ Gerenciador: **pnpm** (instalado em `D:\npm-global`; `corepack enable` falha nes
 
 Comandos: `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm test:e2e`, `pnpm engine:fixture`.
 
+## A leitura roda em duas chamadas
+
+O planejamento Seção 3 descreve uma chamada só. São duas, e o corte é o centro da arquitetura:
+
+1. **`/api/read`** faz a análise (Ato, Movimento, arquétipos, ecos, prática) e escreve o spoiler. É a única latência que o usuário sente, uns 30 s.
+2. O cliente dispara **`/api/dossie`** sem esperar, no instante em que o spoiler aparece. Ela escreve o texto enquanto o cara preenche os quatro campos, então o tempo dela sai de graça.
+3. **`/api/lead`** grava o lead e busca o dossiê: pronto no banco (o normal), em voo (espera até 40 s), ou nem começou (escreve na hora, plano B).
+
+Motivo: a função serverless tem 60 s no Hobby. Numa chamada só o orçamento inteiro ia pra análise e sobrava uma tentativa mal aparada pro texto. Medido contra a fixture do Marcelo, o dossiê saía em 492 palavras contra um teto de 420. Separado, cada metade tem 3 tentativas dentro do orçamento dela.
+
+A regra de honestidade do Prompt Mãe Seção 4.1 continua valendo: a chamada 2 recebe a análise fechada e o contrato dela proíbe reabrir decisão, então o dossiê não tem como contradizer o spoiler.
+
+Concorrência: a função `claim_dossie` (migração 0002) é a trava. Dois caminhos podem disparar a escrita, e sem ela os dois gerariam o mesmo texto em paralelo.
+
 ## Desvios deliberados do planejamento
 
 Registrados aqui porque o planejamento diz outra coisa e a divergência é intencional:
@@ -36,3 +50,4 @@ Registrados aqui porque o planejamento diz outra coisa e a divergência é inten
 5. **Repescagem.** Uma no fluxo inteiro, não uma por pergunta, e o portão é contável: `precisaRepescagem` em `lib/engine/read.ts`, sem chamada de modelo. A checagem de cena com o modelo foi removida junto com o prompt dela. O terceiro critério ("nenhuma pessoa") é lido como pessoa nomeada, e o porquê está comentado na função: ao pé da letra ele salvaria o próprio exemplo de resposta ruim da P1.
 6. **Negrito no dossiê.** Único markdown que o contrato deixa passar, e só em três lugares: os rótulos `A armadilha:` e `O convite:` e o nome do Movimento. `lib/citacoes.ts` parseia, `components/dossie/Texto.tsx` desenha, e toda quebra de linha abre bloco novo, que é o que põe o rótulo em linha própria.
 7. **Frase do card.** A Seção 5 pede a frase oficial do card junto do nome do Movimento. O kit de arte não existe (pendência da Seção 12), os 20 Movimentos estão com `tem_card: false`, e o contrato proíbe o modelo de inventar a frase. Vale o desvio que a própria Seção 7 prevê: só o nome, sem imagem improvisada.
+8. **A Seção 5 não fecha sozinha, e isso está medido.** Os alvos por bloco do Prompt Mãe somam 435 palavras e a faixa dele termina em 420, e a Seção 6 pede o fechamento em "quatro ou cinco frases", o que dá 80 palavras onde a Seção 5 pede 60. O modelo obedece o documento e não o contrato, então ele reproduz a contradição: em oito rodadas ele acerta o Ato e o Movimento na mosca e estoura a devolutiva e o fechamento. O `CONTRATO_DOSSIE` nomeia as duas contas e resolve mandando a faixa ganhar. Levou o dossiê de 496 pra 447 palavras, e as 27 que sobram só somem quando o Adriano ajustar a Seção 5 na fonte.

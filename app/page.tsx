@@ -273,6 +273,29 @@ export default function Quiz() {
 
   /* --- leitura ----------------------------------------------------- */
 
+  /**
+   * Dispara a escrita do dossiê, que é a chamada 2 do engine.
+   *
+   * Uma vez por sessão: o servidor tem trava própria, mas disparar duas vezes
+   * daqui gastaria uma requisição só pra ouvir "já tem alguém escrevendo".
+   *
+   * Erro aqui é silencioso e tem que ser. Se esta requisição não sair, a
+   * `/api/lead` escreve o dossiê na hora, e o único custo é o cara esperar uns
+   * segundos a mais depois de enviar o formulário. Mostrar tela de erro agora,
+   * com o spoiler lido e o formulário na frente dele, perderia o lead por causa
+   * de um problema que se conserta sozinho.
+   */
+  const dossieDisparado = useRef(false);
+
+  const dispararDossie = useCallback(() => {
+    if (dossieDisparado.current) return;
+    dossieDisparado.current = true;
+
+    void fetch('/api/dossie', { method: 'POST' }).catch(() => {
+      // O plano B da /api/lead cobre.
+    });
+  }, []);
+
   const rodarLeitura = useCallback(async () => {
     setOcupado(true);
     rastrear.leituraComecou();
@@ -327,6 +350,12 @@ export default function Quiz() {
       setSpoiler(dados.spoiler ?? '');
       rastrear.spoiler();
       setTela('spoiler');
+
+      // A chamada 2 começa agora e roda enquanto ele lê o spoiler e preenche o
+      // formulário. Sem await de propósito: o tempo dela é tempo que ele já ia
+      // gastar digitando, e esperar aqui devolveria a latência que o corte em
+      // duas chamadas existe pra esconder. A resposta não traz nada da leitura.
+      dispararDossie();
     } catch {
       rastrear.erro('rede');
       setOrigemErro('leitura');
@@ -334,7 +363,7 @@ export default function Quiz() {
     } finally {
       setOcupado(false);
     }
-  }, [respostas, garantirSessao]);
+  }, [respostas, garantirSessao, dispararDossie]);
 
   useEffect(() => {
     if (tela !== 'lendo' || leituraDisparada.current) return;
@@ -393,6 +422,7 @@ export default function Quiz() {
     setDesvio('');
     setAtual(1);
     leituraDisparada.current = false;
+    dossieDisparado.current = false;
     try {
       window.localStorage.removeItem(CHAVE);
     } catch {

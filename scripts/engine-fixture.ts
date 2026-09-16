@@ -20,9 +20,9 @@ import { config } from 'dotenv';
 config({ path: '.env.local' });
 config();
 
-import { DesvioError, gerarLeitura } from '../lib/engine/read';
+import { DesvioError, escreverDossie, gerarAnalise } from '../lib/engine/read';
 import { checarRiscoConjunto } from '../lib/engine/risk';
-import { validar } from '../lib/engine/validate';
+import { validarAnalise, validarDossie } from '../lib/engine/validate';
 
 type Fixture = {
   nome: string;
@@ -57,17 +57,31 @@ async function rodar(fixture: Fixture, rodadas: number) {
   for (let i = 1; i <= rodadas; i++) {
     const t = Date.now();
     try {
-      const r = await gerarLeitura(fixture.respostas);
-      const l = r.leitura;
+      // As duas chamadas, cronometradas separadas, que é o que interessa medir
+      // agora: em produção a 2 roda enquanto o cara preenche o formulário, então
+      // só a 1 é latência que ele sente.
+      const t1 = Date.now();
+      const a = await gerarAnalise(fixture.respostas);
+      const msAnalise = Date.now() - t1;
 
-      if (l.sinalizacao.risco) {
+      if (a.analise.sinalizacao.risco) {
         console.log(`\n  rodada ${i}: RISCO sinalizado pelo modelo. Sem dossiê.`);
         continue;
       }
-      if (l.sinalizacao.piada) {
-        console.log(`\n  rodada ${i}: PIADA. "${l.spoiler.slice(0, 90)}"`);
+      if (a.analise.sinalizacao.piada) {
+        console.log(`\n  rodada ${i}: PIADA. "${a.analise.spoiler.slice(0, 90)}"`);
         continue;
       }
+
+      const t2 = Date.now();
+      const d = await escreverDossie(fixture.respostas, a.analise);
+      const msDossie = Date.now() - t2;
+
+      const l = { ...a.analise, dossie: d.dossie };
+      const r = {
+        model: a.model,
+        tentativas: a.tentativas + d.tentativas,
+      };
 
       // Guarda a saída inteira pra inspeção. É o que permite entender por que o
       // validador reprovou sem ter que adivinhar pelo nome da regra.
@@ -79,7 +93,13 @@ async function rodar(fixture: Fixture, rodadas: number) {
         'utf8',
       );
 
-      const v = validar(l, fixture.respostas);
+      const va = validarAnalise(a.analise, fixture.respostas);
+      const vd = validarDossie(d.dossie, a.analise, fixture.respostas);
+      const v = {
+        ok: va.ok && vd.ok,
+        duras: [...va.duras, ...vd.duras],
+        suaves: [...va.suaves, ...vd.suaves],
+      };
       const nDossie =
         palavras(l.dossie.titulo) +
         palavras(l.dossie.devolutiva) +
@@ -92,7 +112,9 @@ async function rodar(fixture: Fixture, rodadas: number) {
 
       console.log(
         [
-          `\n  rodada ${i}  ${((Date.now() - t) / 1000).toFixed(1)}s  ${r.tentativas} tentativa(s)`,
+          `\n  rodada ${i}  ${((Date.now() - t) / 1000).toFixed(1)}s no total  ${r.tentativas} tentativa(s)`,
+          `    Chamada 1    ${(msAnalise / 1000).toFixed(1)}s, ${a.tentativas} tentativa(s)  ← a única que o cara espera`,
+          `    Chamada 2    ${(msDossie / 1000).toFixed(1)}s, ${d.tentativas} tentativa(s)  ← roda durante o formulário`,
           `    Ato          ${l.ato.nome} (${l.ato.posicao})`,
           `    Movimento    ${l.movimento.numero} ${l.movimento.nome}${l.movimento.aposta ? ' [aposta]' : ''}${l.movimento.recorrencia_detectada ? ' [recorrência]' : ''}`,
           `    Arquétipos   ${arq}  fortalecer: ${l.fortalecer_primeiro}`,

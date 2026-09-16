@@ -1,56 +1,27 @@
 import { NextResponse } from 'next/server';
 
-import { DesvioError, gerarLeitura } from '@/lib/engine/read';
+import { DesvioError, gerarAnalise } from '@/lib/engine/read';
 import { checarRiscoConjunto } from '@/lib/engine/risk';
 import type { Respostas } from '@/lib/engine/validate';
 import { limitarLeitura, MENSAGEM_LIMITE } from '@/lib/ratelimit';
 import { atualizarStatus, ipDaRequisicao, lerCookieSessao } from '@/lib/session';
+import { respostasDaSessao } from '@/lib/respostas';
 import { supabaseOpcional } from '@/lib/supabase';
 import { RISCO } from '@/lib/copy';
 
 export const runtime = 'nodejs';
 
 /**
- * A leitura leva de 12 a 25 segundos. Sem esta linha a função serverless corta
- * antes de responder e o usuário vê a tela de erro com a leitura pronta e paga
- * do outro lado. O planejamento não previu isto e é o item que mais quebraria em
- * produção.
+ * Esta rota é a chamada 1: análise e spoiler, sem dossiê. Sem esta linha a
+ * função serverless corta antes de responder e o usuário vê a tela de erro com
+ * a leitura pronta e paga do outro lado.
  *
- * 60 é o teto do plano Hobby da Vercel, que é o plano da conta hoje. Em Pro dá
- * pra subir pra 300, e aí o orçamento de tempo do engine (`lib/engine/read.ts`)
- * sobe junto pela env `ENGINE_BUDGET_MS`.
+ * 60 é o teto do plano Hobby da Vercel, que é o plano da conta hoje. O dossiê
+ * tem os 60 s dele em `/api/dossie`, que é a razão de existir do corte.
  */
 export const maxDuration = 60;
 
 type CorpoRead = { respostas?: Partial<Respostas> };
-
-async function respostasDoBanco(sessionId: string): Promise<Respostas | null> {
-  const db = supabaseOpcional();
-  if (!db) return null;
-
-  const { data, error } = await db
-    .from('quiz_answers')
-    .select('pergunta, texto, repescagem')
-    .eq('session_id', sessionId);
-
-  if (error || !data || data.length < 4) return null;
-
-  const mapa = new Map<number, string>();
-  for (const linha of data) {
-    const texto = linha.texto as string;
-    const rep = linha.repescagem as string | null;
-    mapa.set(linha.pergunta as number, rep ? `${texto}\n\n${rep}` : texto);
-  }
-
-  if (![1, 2, 3, 4].every((n) => (mapa.get(n) ?? '').trim().length > 0)) return null;
-
-  return {
-    p1: mapa.get(1)!,
-    p2: mapa.get(2)!,
-    p3: mapa.get(3)!,
-    p4: mapa.get(4)!,
-  };
-}
 
 function respostasDoCorpo(corpo: CorpoRead): Respostas | null {
   const r = corpo.respostas;
@@ -102,7 +73,7 @@ export async function POST(req: Request) {
 
   // O banco manda quando existe. O corpo é o caminho de desenvolvimento local,
   // antes das envs do Supabase entrarem.
-  const respostas = (await respostasDoBanco(sessionId)) ?? respostasDoCorpo(corpo);
+  const respostas = (await respostasDaSessao(sessionId)) ?? respostasDoCorpo(corpo);
 
   if (!respostas) {
     return NextResponse.json({ erro: 'respostas_incompletas' }, { status: 400 });
@@ -117,31 +88,34 @@ export async function POST(req: Request) {
   await atualizarStatus(sessionId, 'reading');
 
   try {
-    const r = await gerarLeitura(respostas);
+    const r = await gerarAnalise(respostas);
 
-    if (r.leitura.sinalizacao.risco) {
+    if (r.analise.sinalizacao.risco) {
       await atualizarStatus(sessionId, 'risk');
       return NextResponse.json({
         tipo: 'risco',
-        texto: r.leitura.sinalizacao.risco_motivo || RISCO.fallback,
+        texto: r.analise.sinalizacao.risco_motivo || RISCO.fallback,
       });
     }
 
-    if (r.leitura.sinalizacao.piada) {
+    if (r.analise.sinalizacao.piada) {
       await atualizarStatus(sessionId, 'joke');
-      return NextResponse.json({ tipo: 'piada', texto: r.leitura.spoiler });
+      return NextResponse.json({ tipo: 'piada', texto: r.analise.spoiler });
     }
 
+    // `dossie_status` nasce em 'pendente'. Quem escreve o texto é `/api/dossie`,
+    // disparada pelo cliente assim que esta resposta chega na tela.
     if (db) {
       const { error } = await db.from('quiz_readings').insert({
         session_id: sessionId,
         model: r.model,
-        output: r.leitura,
+        output: r.analise,
         validation: { ...r.validacao, tentativas: r.tentativas },
         latency_ms: r.latency_ms,
+        dossie_status: 'pendente',
       });
       if (error) {
-        console.error('[read] não gravou a leitura', error);
+        console.error('[read] não gravou a análise', error);
         return NextResponse.json({ erro: 'nao_gravou' }, { status: 500 });
       }
     }
@@ -156,10 +130,10 @@ export async function POST(req: Request) {
 
     await atualizarStatus(sessionId, 'spoiler_shown');
 
-    // Só o spoiler atravessa a rede. O dossiê fica no banco até o lead entrar.
+    // Só o spoiler atravessa a rede. O dossiê nem escrito está ainda.
     return NextResponse.json({
       tipo: 'spoiler',
-      spoiler: r.leitura.spoiler,
+      spoiler: r.analise.spoiler,
       latency_ms: r.latency_ms,
     });
   } catch (e) {

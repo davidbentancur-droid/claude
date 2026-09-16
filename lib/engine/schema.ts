@@ -111,7 +111,19 @@ export const Sinalizacao = z.object({
   piada: z.coerce.boolean().default(false),
 });
 
-export const LeituraSchema = z.object({
+/**
+ * A saída da chamada 1: tudo que é decisão, mais o spoiler, e nenhum dossiê.
+ *
+ * O corte entre este schema e o de baixo é o corte entre as duas chamadas. A
+ * chamada 1 decide (Ato, Movimento, arquétipos, ecos, prática) e escreve o
+ * spoiler. A chamada 2 recebe isto fechado e só redige.
+ *
+ * A regra de honestidade do Prompt Mãe Seção 4.1, "o spoiler só pode afirmar o
+ * que o dossiê confirma", continua valendo por construção: antes valia porque
+ * os dois saíam da mesma passada, agora vale porque os dois saem da mesma
+ * análise, e a chamada 2 não tem permissão de reabrir nenhuma decisão.
+ */
+export const AnaliseSchema = z.object({
   triagem: z.array(TriagemItem).min(1).max(4),
   inventario: z.object({
     fatos: z.array(z.string()).default([]),
@@ -139,13 +151,27 @@ export const LeituraSchema = z.object({
   gancho_usado: enumTolerante(['eco', 'arquetipo'] as const, {
     arquétipo: 'arquetipo',
   }),
-  dossie: Dossie,
   sinalizacao: Sinalizacao,
-  /**
-   * A contagem que o modelo declara. Não é fonte de verdade, quem conta de
-   * verdade é o validador. Existe porque obrigar o modelo a escrever o número
-   * o obriga a contar, e contar é o que faltava pra ele respeitar a faixa.
-   */
+  contagem_spoiler: z.coerce.number().int().min(0).default(0),
+});
+
+/**
+ * A saída da chamada 2. Só o texto, mais a contagem declarada.
+ *
+ * A contagem não é fonte de verdade, quem conta de verdade é o validador. Ela
+ * existe porque obrigar o modelo a escrever o número o obriga a contar.
+ */
+export const SaidaDossieSchema = z.object({
+  dossie: Dossie,
+  contagem: z.coerce.number().int().min(0).default(0),
+});
+
+/**
+ * A leitura inteira, análise mais dossiê. É o que o banco guarda montado e o
+ * que `montarDossie` e o validador completo recebem.
+ */
+export const LeituraSchema = AnaliseSchema.extend({
+  dossie: Dossie,
   contagem: z
     .object({
       dossie: z.coerce.number().int().min(0).default(0),
@@ -154,6 +180,8 @@ export const LeituraSchema = z.object({
     .optional(),
 });
 
+export type Analise = z.infer<typeof AnaliseSchema>;
+export type SaidaDossie = z.infer<typeof SaidaDossieSchema>;
 export type Leitura = z.infer<typeof LeituraSchema>;
 export type DossieLeitura = z.infer<typeof Dossie>;
 
