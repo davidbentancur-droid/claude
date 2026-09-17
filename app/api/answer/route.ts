@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { checarRisco } from '@/lib/engine/risk';
+import { registrarErro } from '@/lib/erros';
 import { atualizarStatus, lerCookieSessao } from '@/lib/session';
 import { supabaseOpcional } from '@/lib/supabase';
 
@@ -62,6 +63,13 @@ export async function POST(req: Request) {
 
     if (error) {
       console.error('[answer] falhou', error);
+      registrarErro({
+        rota: '/api/answer',
+        codigo: 'resposta_nao_gravou',
+        sessionId,
+        detalhe: `pergunta ${pergunta}: ${error.message}`,
+        req,
+      });
       return NextResponse.json({ erro: 'nao_gravou' }, { status: 500 });
     }
 

@@ -9,6 +9,21 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: [['list']],
 
+  /**
+   * Um worker fora de CI, e isto custou uma tarde pra descobrir.
+   *
+   * São dois projetos, desktop e mobile, e em paralelo cheio nesta máquina os
+   * dois disputam CPU com o servidor Next do outro lado. O resultado engana:
+   * metade dos testes estoura o timeout, sempre os de desktop, e parece bug de
+   * aplicação. Não é. O mesmo teste que falha em paralelo passa em 3,5 s
+   * sozinho, e a suíte inteira passa em 31 s com um worker. Em dev o quadro é
+   * ainda pior, porque o Turbopack compila rota sob demanda e o `/api/lead`,
+   * que puxa o engine inteiro, chegou a levar 156 s pra compilar.
+   *
+   * Em CI, onde a máquina é dedicada, o paralelismo volta.
+   */
+  workers: process.env.CI ? undefined : 1,
+
   use: {
     baseURL: BASE,
     locale: 'pt-BR',

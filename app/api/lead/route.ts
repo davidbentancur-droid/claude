@@ -8,6 +8,7 @@ import {
   salvarDossie,
 } from '@/lib/engine/persistencia';
 import { escreverDossie } from '@/lib/engine/read';
+import { registrarErro } from '@/lib/erros';
 import type { Analise, DossieLeitura } from '@/lib/engine/schema';
 import { classificarOrcamento, normalizarTelefone } from '@/lib/phone';
 import { montarDossie, resumoParaContato } from '@/lib/render';
@@ -136,6 +137,7 @@ export async function POST(req: Request) {
 
   if (erroLead) {
     console.error('[lead] não gravou', erroLead);
+    registrarErro({ rota: '/api/lead', codigo: 'lead_nao_gravou', sessionId, detalhe: erroLead.message, req });
     return NextResponse.json({ erro: 'nao_gravou' }, { status: 500 });
   }
 
@@ -160,6 +162,7 @@ export async function POST(req: Request) {
   }
 
   if (!dossie) {
+    registrarErro({ rota: '/api/lead', codigo: 'dossie_indisponivel', sessionId, detalhe: `estado ${linha.estado}`, req });
     await atualizarStatus(sessionId, 'error');
     return NextResponse.json({ erro: 'dossie_indisponivel' }, { status: 500 });
   }

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { DesvioError, gerarAnalise } from '@/lib/engine/read';
 import { AnaliseSchema } from '@/lib/engine/schema';
 import { checarRiscoConjunto } from '@/lib/engine/risk';
+import { registrarErro } from '@/lib/erros';
 import type { Respostas } from '@/lib/engine/validate';
 import { limitarLeitura, MENSAGEM_LIMITE } from '@/lib/ratelimit';
 import { atualizarStatus, ipDaRequisicao, lerCookieSessao } from '@/lib/session';
@@ -169,6 +170,7 @@ export async function POST(req: Request) {
 
       if (error) {
         console.error('[read] não gravou a análise', error);
+        registrarErro({ rota: '/api/read', codigo: 'nao_gravou', sessionId, detalhe: error.message, req });
         return NextResponse.json({ erro: 'nao_gravou' }, { status: 500 });
       }
     }
@@ -196,6 +198,7 @@ export async function POST(req: Request) {
     }
 
     console.error('[read] falhou', e);
+    registrarErro({ rota: '/api/read', codigo: 'leitura_falhou', sessionId, detalhe: e, req });
     await atualizarStatus(sessionId, 'error');
     return NextResponse.json({ erro: 'leitura_falhou' }, { status: 500 });
   }

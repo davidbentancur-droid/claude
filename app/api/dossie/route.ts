@@ -7,6 +7,7 @@ import {
   salvarDossie,
 } from '@/lib/engine/persistencia';
 import { escreverDossie } from '@/lib/engine/read';
+import { registrarErro } from '@/lib/erros';
 import { respostasDaSessao } from '@/lib/respostas';
 import { lerCookieSessao } from '@/lib/session';
 
@@ -89,6 +90,7 @@ export async function POST() {
     return NextResponse.json({ estado: 'pronto' });
   } catch (e) {
     console.error('[dossie] falhou', e);
+    registrarErro({ rota: '/api/dossie', codigo: 'dossie_falhou', sessionId, detalhe: e });
     // Solta a trava. Sem isto a rota do lead esperaria por um dossiê que já
     // morreu, e o plano B dela nunca entraria.
     await marcarFalha(sessionId, e instanceof Error ? e.message : String(e));
