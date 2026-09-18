@@ -27,7 +27,7 @@ export const downsellAspecto = process.env.NEXT_PUBLIC_DOWNSELL_VSL_ASPECTO ?? '
 /** WhatsApp do Adriano. É pra onde vai o botão preenchido, abaixo da VSL. */
 export const whatsappUrl = process.env.NEXT_PUBLIC_WHATSAPP_URL ?? '';
 
-/** Vídeo da página de downsell, o Estoicismo nos Mitos. */
+/** Vídeo da página de downsell. */
 export const downsellVslEmbedUrl = urlDeEmbed(
   process.env.NEXT_PUBLIC_DOWNSELL_VSL_EMBED_URL ?? '',
 );

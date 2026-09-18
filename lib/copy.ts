@@ -309,9 +309,16 @@ export const VSL = {
 export const DOWNSELL = {
   titulo: 'Espere aqui!',
   linha: 'Esta oferta existe só nesta página.',
+  /**
+   * Sem o nome do produto em lugar nenhum da página, por pedido do David em
+   * 18/09. Quem apresenta a oferta é o vídeo, e nomear o produto antes dele
+   * entrega a resposta antes da pergunta.
+   *
+   * Por isso a linha de apoio fala do que a coisa é, e não de como ela se
+   * chama. O nome também sai do título da aba e da rota, que é `/oferta`.
+   */
   apoio:
-    'Antes de tu ir, tem uma segunda porta. Mais curta, mais barata, e pela mesma lente: os mitos lidos como manual de conduta.',
-  produto: 'Estoicismo nos Mitos',
+    'Antes de tu ir, tem uma segunda porta. Mais curta, mais barata, e pela mesma lente que tu acabou de ler.',
   botao: 'Quero aproveitar a oferta',
   placeholder: 'O vídeo da oferta entra aqui.',
   voltar: 'Voltar pro meu dossiê',

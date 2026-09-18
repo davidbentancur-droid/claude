@@ -57,7 +57,7 @@ export function Downsell() {
       <Helice className="espiral-fundo" largura={520} voltas={4} opacidade={0.4} />
 
       <article className="coluna acima-do-fundo" style={{ paddingBlock: 'clamp(2rem, 6vw, 3.5rem)' }}>
-        <h1 className="display titulo-downsell">
+        <h1 className="display titulo-downsell atencao">
           {/*
             O espaço fica fora do span de propósito. Dentro de um inline-block
             ele é colapsado, e o título saía grudado: "Espereaqui!".
@@ -72,18 +72,17 @@ export function Downsell() {
         </h1>
 
         <p
+          /* Só `palavra-entra` aqui. As duas classes animam a mesma
+             propriedade, e a segunda apagaria a entrada da primeira. A
+             respiração fica no h1, que é o que o olho procura. */
           className="subtitulo palavra-entra"
           style={{ margin: '0.75rem 0 2rem', animationDelay: '320ms' }}
         >
           {DOWNSELL.linha}
         </p>
 
-        <p className="corpo" style={{ margin: '0 0 0.5rem', color: 'var(--ink-2)' }}>
+        <p className="corpo" style={{ margin: '0 0 2rem', color: 'var(--ink-2)' }}>
           {DOWNSELL.apoio}
-        </p>
-
-        <p className="display" style={{ fontSize: 'clamp(1.5rem, 1.2rem + 1.2vw, 1.875rem)', color: 'var(--gold)', margin: '1.5rem 0 2rem' }}>
-          {DOWNSELL.produto}
         </p>
 
         <div ref={ref}>
@@ -101,14 +100,14 @@ export function Downsell() {
         <div style={{ marginTop: '2.25rem' }}>
           {temDownsellCheckout ? (
             <a
-              className="botao botao-degrade"
+              className="botao botao-degrade botao-pulso"
               href={downsellCheckoutUrl}
               onClick={() => rastrear.downsellCheckout()}
             >
               {DOWNSELL.botao}
             </a>
           ) : (
-            <button className="botao botao-degrade" disabled>
+            <button className="botao botao-degrade botao-pulso" disabled>
               {DOWNSELL.botao}
             </button>
           )}

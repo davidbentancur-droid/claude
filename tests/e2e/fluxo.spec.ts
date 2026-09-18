@@ -182,12 +182,21 @@ test('nenhuma resposta antes do lead carrega texto de dossiê', async ({ request
 });
 
 test('o downsell existe, está fora do índice e não promete resultado', async ({ page }) => {
-  await page.goto('/estoicismo-nos-mitos');
+  await page.goto('/oferta');
 
   const main = page.locator('main');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Espere aqui');
-  await expect(main).toContainText('Estoicismo nos Mitos');
   await expect(main).toContainText('Esta oferta existe só nesta página.');
+
+  /*
+   * O nome do produto não aparece em lugar nenhum, por pedido do David em
+   * 18/09. Quem apresenta a oferta é o vídeo. Isto pega tanto o nome atual
+   * quanto o antigo, que já morava aqui e saiu.
+   */
+  const corpo = (await page.locator('body').innerText()).toLowerCase();
+  expect(corpo).not.toContain('parsifal');
+  expect(corpo).not.toContain('estoicismo');
+  await expect(page).toHaveTitle(/Espere aqui/);
 
   // Página de oferta indexada aparece no Google solta, sem o dossiê antes.
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);

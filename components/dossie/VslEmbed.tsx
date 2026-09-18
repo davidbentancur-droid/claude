@@ -100,7 +100,7 @@ function SaidasDaVsl() {
         {VSL.botaoSim}
       </a>
 
-      <Link className="botao botao-vazado" href="/estoicismo-nos-mitos" onClick={() => rastrear.vslNao()}>
+      <Link className="botao botao-vazado" href="/oferta" onClick={() => rastrear.vslNao()}>
         {VSL.botaoNao}
       </Link>
     </div>

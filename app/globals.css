@@ -370,6 +370,71 @@ q.dele {
   line-height: 1.05;
 }
 
+/*
+ * A chamada de atenção, e ela não pisca.
+ *
+ * O pedido foi "algo piscando pra pessoa prestar mais atenção", e o efeito é
+ * esse. O meio é outro: piscar de verdade é cansativo de ler, fica brega, e
+ * acima de três vezes por segundo é risco pra quem tem epilepsia fotossensível.
+ *
+ * O que faz o mesmo trabalho é uma respiração lenta, três vezes, e depois
+ * silêncio. Repetir pra sempre o olho aprende a ignorar em dez segundos, que é
+ * o contrário do que a animação existe pra fazer.
+ */
+@keyframes respirar {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.atencao {
+  animation: respirar 1.1s ease-in-out 3;
+  /* Começa depois da entrada palavra por palavra, senão as duas se atropelam. */
+  animation-delay: 700ms;
+}
+
+/*
+ * O anel do botão. Um filete dourado que sai da borda e some, de novo e de
+ * novo, marcando onde clicar.
+ *
+ * Retangular e de um pixel, não halo: a marca proíbe sombra difusa, e um brilho
+ * atrás do botão seria exatamente isso. Fica no `::after` pra não empurrar
+ * layout nenhum, e não captura clique.
+ */
+@keyframes anel {
+  0% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  70%,
+  100% {
+    transform: scale(1.12, 1.4);
+    opacity: 0;
+  }
+}
+
+.botao-pulso {
+  position: relative;
+}
+
+.botao-pulso::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--gold);
+  animation: anel 2.4s ease-out infinite;
+  pointer-events: none;
+}
+
+.botao-pulso:disabled::after {
+  animation: none;
+  opacity: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
