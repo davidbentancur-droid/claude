@@ -12,8 +12,8 @@ import {
   DUALTONE,
   marcaDePosicao,
   montarGeometria,
+  OURO,
   PAPEL,
-  TINTA,
   type Posicao,
 } from './espiral';
 
@@ -205,7 +205,7 @@ function Placa({ dados, movel }: { dados: Dados; movel: boolean }) {
         width="100%"
         role="img"
         aria-label={`Círculo do método com o Ato ${dados.ato} aceso, posição ${dados.posicao}, e o Movimento ${dados.movimento.nome}.`}
-        style={{ display: 'block', background: PAPEL, maxWidth: '100%' }}
+        style={{ display: 'block', background: 'transparent', maxWidth: '100%' }}
       >
         <defs>
           <linearGradient id={gradId} x1="0" y1="1" x2="1" y2="0">
@@ -216,7 +216,7 @@ function Placa({ dados, movel }: { dados: Dados; movel: boolean }) {
 
         {/* Setores apagados. Opacidade baixa, sem nome. */}
         {apagados.map((a) => (
-          <path key={a} className="setor-apagado" d={g.setores[a]} fill={TINTA} opacity={0} />
+          <path key={a} className="setor-apagado" d={g.setores[a]} fill={OURO} opacity={0} />
         ))}
 
         {/* O Ato dele, aceso, com o dualtone oficial. */}
@@ -232,7 +232,7 @@ function Placa({ dados, movel }: { dados: Dados; movel: boolean }) {
           data-len={g.circunferencia}
           d={g.borda}
           fill="none"
-          stroke={TINTA}
+          stroke={OURO}
           strokeWidth={1.5}
           strokeDasharray={g.circunferencia}
         />
@@ -244,7 +244,7 @@ function Placa({ dados, movel }: { dados: Dados; movel: boolean }) {
           y1={g.horizontal.y1}
           x2={g.horizontal.x2}
           y2={g.horizontal.y2}
-          stroke={TINTA}
+          stroke={OURO}
           strokeWidth={1.5}
           strokeDasharray={g.horizontal.comprimento}
         />
@@ -256,7 +256,7 @@ function Placa({ dados, movel }: { dados: Dados; movel: boolean }) {
           y1={g.vertical.y1}
           x2={g.vertical.x2}
           y2={g.vertical.y2}
-          stroke={TINTA}
+          stroke={OURO}
           strokeWidth={1.5}
           strokeDasharray={g.vertical.comprimento}
         />
@@ -268,7 +268,7 @@ function Placa({ dados, movel }: { dados: Dados; movel: boolean }) {
           textAnchor="middle"
           fontFamily="var(--fonte-display), Georgia, serif"
           fontSize={movel ? 19 : 21}
-          fill={TINTA}
+          fill={OURO}
           opacity={0}
         >
           {dados.ato}
@@ -281,7 +281,7 @@ function Placa({ dados, movel }: { dados: Dados; movel: boolean }) {
           cx={mx}
           cy={my}
           r={5.5}
-          fill={TINTA}
+          fill={OURO}
           stroke={PAPEL}
           strokeWidth={2}
           opacity={0}
@@ -292,12 +292,12 @@ function Placa({ dados, movel }: { dados: Dados; movel: boolean }) {
           data-len={g.seta.comprimento}
           d={g.seta.caminho}
           fill="none"
-          stroke={TINTA}
+          stroke={OURO}
           strokeWidth={1.5}
           strokeDasharray={g.seta.comprimento}
           opacity={0}
         />
-        <path className="ponta" d={g.seta.ponta} fill={TINTA} opacity={0} />
+        <path className="ponta" d={g.seta.ponta} fill={OURO} opacity={0} />
 
         <circle
           className="traco proximo"
@@ -306,7 +306,7 @@ function Placa({ dados, movel }: { dados: Dados; movel: boolean }) {
           cy={g.proximo.cy}
           r={g.proximo.r}
           fill="none"
-          stroke={TINTA}
+          stroke={OURO}
           strokeWidth={1.5}
           strokeDasharray={g.proximo.circunferencia}
           opacity={0}
@@ -365,7 +365,7 @@ function CardMovimento({
         textAnchor={ancora}
         fontFamily="var(--fonte-display), Georgia, serif"
         fontSize={tamanhoNome}
-        fill={TINTA}
+        fill={OURO}
       >
         {linha}
       </text>,
@@ -384,7 +384,7 @@ function CardMovimento({
           textAnchor={ancora}
           fontFamily="var(--fonte-body), system-ui, sans-serif"
           fontSize={14}
-          fill={TINTA}
+          fill={OURO}
           opacity={0.75}
         >
           {linha}
@@ -405,7 +405,7 @@ function CardMovimento({
           textAnchor={ancora}
           fontFamily="var(--fonte-body), system-ui, sans-serif"
           fontSize={13}
-          fill={TINTA}
+          fill={OURO}
           opacity={0.6}
         >
           {linha}
@@ -486,7 +486,7 @@ function BotaoExportar({
             ? `${display}, Georgia, serif`
             : `${corpo}, system-ui, sans-serif`;
           ctx.font = `${tamanho}px ${familia}`;
-          ctx.fillStyle = el.getAttribute('fill') ?? TINTA;
+          ctx.fillStyle = el.getAttribute('fill') ?? OURO;
           ctx.textAlign = (el.getAttribute('text-anchor') === 'middle' ? 'center' : 'start') as CanvasTextAlign;
           ctx.fillText(
             el.textContent ?? '',

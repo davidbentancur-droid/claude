@@ -28,11 +28,15 @@ export function Abertura({ onComecar }: { onComecar: () => void }) {
       <Helice className="espiral-fundo" largura={560} voltas={4} opacidade={0.62} />
 
       <div className="centro acima-do-fundo abertura-texto">
-        <h1 className="display pergunta" style={{ marginBottom: '0.75rem' }}>
-          {ABERTURA.titulo}
+        {/*
+          O heading de venda é o h1 desde 18/09. Antes o h1 era a promessa
+          curta, que agora desce um degrau e vira a linha em voz, logo abaixo.
+        */}
+        <h1 className="display pergunta" style={{ marginBottom: '1rem' }}>
+          {ABERTURA.heading}
         </h1>
         <p className="subtitulo" style={{ margin: '0 0 2rem' }}>
-          {ABERTURA.linha}
+          {ABERTURA.titulo} {ABERTURA.linha}
         </p>
 
         <p className="corpo" style={{ color: 'var(--ink-2)', margin: '0 0 1.1em' }}>

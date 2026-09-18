@@ -14,7 +14,7 @@ import {
   Risco,
   Spoiler,
 } from '@/components/quiz/Telas';
-import { FORMULARIO, PERGUNTAS } from '@/lib/copy';
+import { agruparCampos, espalharCampos, FORMULARIO, PERGUNTAS } from '@/lib/copy';
 import type { DossiePublico } from '@/lib/render';
 import { rastrear } from '@/lib/tracking';
 
@@ -40,7 +40,8 @@ type Tela =
   | 'piada'
   | 'erro';
 
-type NumeroPergunta = 1 | 2 | 3 | 4;
+/** Três telas de pergunta, Prompt Mãe Seção 2 de 18/09. */
+type NumeroPergunta = 1 | 2 | 3;
 
 type Guardado = {
   tela: Tela;
@@ -92,9 +93,9 @@ export default function Quiz() {
   const [ocupado, setOcupado] = useState(false);
   /**
    * De onde veio o erro. Sem isso, "Tentar de novo" sempre voltava pra leitura,
-   * e um erro na P1 mandaria o cara direto pra `/api/read` sem as quatro
-   * respostas, que responde `respostas_incompletas` e cai na mesma tela: um
-   * laço fechado sem saída.
+   * e um erro na P1 mandaria o cara direto pra `/api/read` sem as respostas,
+   * que responde `respostas_incompletas` e cai na mesma tela: um laço fechado
+   * sem saída.
    */
   const [origemErro, setOrigemErro] = useState<'resposta' | 'leitura'>('leitura');
   const leituraDisparada = useRef(false);
@@ -107,8 +108,8 @@ export default function Quiz() {
    * Toda chamada de API espera por isto antes de sair. Sem essa espera, um cara
    * rápido envia a P1 antes do cookie existir, leva 401 e a resposta não é
    * gravada em silêncio: a leitura até sai, porque `/api/read` aceita as
-   * respostas pelo corpo, mas o lead chega no WhatsApp sem as quatro respostas,
-   * que é exatamente o que o formulário existe pra viabilizar.
+   * respostas pelo corpo, mas o lead chega no WhatsApp sem as respostas, que é
+   * exatamente o que o formulário existe pra viabilizar.
    */
   const sessao = useRef<Promise<void> | null>(null);
 
@@ -174,7 +175,7 @@ export default function Quiz() {
   );
 
   const seguir = useCallback((numero: NumeroPergunta) => {
-    if (numero < 4) {
+    if (numero < PERGUNTAS.length) {
       setAtual((numero + 1) as NumeroPergunta);
       setTela('pergunta');
     } else {
@@ -184,19 +185,35 @@ export default function Quiz() {
 
   /* --- envio de pergunta ------------------------------------------ */
 
-  async function enviarPergunta({ texto, via }: Envio) {
+  async function enviarPergunta({ partes, via }: Envio) {
     const numero = atual;
+    const dadosPergunta = PERGUNTAS.find((p) => p.numero === numero);
+    if (!dadosPergunta) return;
+
+    /**
+     * Uma tela pode virar mais de uma resposta no banco.
+     *
+     * A P3 tem três campos e grava dois registros: a busca e o obstáculo como
+     * resposta 3, o preço de nada mudar como resposta 4. O porquê está em
+     * `lib/copy.ts`, e é do Prompt Mãe: a dor tem trabalho próprio no último
+     * parágrafo e no primeiro contato pelo WhatsApp.
+     */
+    const grupos = [...agruparCampos(dadosPergunta, partes)];
+    const texto = grupos.map(([, t]) => t).join('\n');
+
     setOcupado(true);
-    setRespostas((r) => ({ ...r, [numero]: texto }));
+    setRespostas((r) => ({
+      ...r,
+      ...Object.fromEntries(grupos.map(([n, t]) => [String(n), t])),
+    }));
 
     try {
-      const dadosPergunta = PERGUNTAS.find((p) => p.numero === numero);
       /**
        * A cota é do fluxo, não da pergunta. Prompt Mãe Seção 2: uma repescagem
        * no máximo, em P1 ou P2, e o normal é zero. Se a P1 já gastou, a P2 segue
        * com o que vier.
        */
-      const podeRepescar = dadosPergunta?.repescagem && !repescou;
+      const podeRepescar = dadosPergunta.repescagem && !repescou;
 
       if (podeRepescar) {
         await garantirSessao();
@@ -211,7 +228,7 @@ export default function Quiz() {
         };
 
         if (dados.risco) {
-          await gravarResposta(numero, texto, null, via);
+          for (const [n, t] of grupos) await gravarResposta(n, t, null, via);
           rastrear.risco();
           setTela('risco');
           return;
@@ -226,7 +243,10 @@ export default function Quiz() {
         }
       }
 
-      const risco = await gravarResposta(numero, texto, null, via);
+      let risco = false;
+      for (const [n, t] of grupos) {
+        risco = (await gravarResposta(n, t, null, via)) || risco;
+      }
       rastrear.perguntaEnviada(numero, via);
 
       if (risco) {
@@ -474,7 +494,10 @@ export default function Quiz() {
         <Pergunta
           key={atual}
           numero={atual}
-          valorInicial={respostas[String(atual)] ?? ''}
+          valoresIniciais={espalharCampos(
+            PERGUNTAS.find((p) => p.numero === atual)!,
+            respostas,
+          )}
           onEnviar={enviarPergunta}
           ocupado={ocupado}
         />

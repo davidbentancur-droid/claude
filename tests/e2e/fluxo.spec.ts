@@ -15,8 +15,31 @@ const PERGUNTAS = [
   'Volta uns sete anos pra trás',
   'E nos últimos meses, o que está acontecendo na tua vida agora?',
   'O que tu mais tem buscado ultimamente',
-  'Se daqui a dois anos nada disso tiver mudado',
 ];
+
+/**
+ * Preenche a tela `i` com a fixture.
+ *
+ * A terceira tela tem três campos desde o Prompt Mãe de 18/09: a busca, o
+ * obstáculo e o preço de nada mudar. A fixture continua com quatro respostas,
+ * porque o armazenamento continua com quatro, então as duas linhas da p3 mais a
+ * p4 viram os três campos da tela.
+ */
+async function preencherTela(page: import('@playwright/test').Page, i: number) {
+  const r = fixture.respostas;
+  const areas = page.locator('textarea');
+
+  if (i === 2) {
+    const [busca, obstaculo] = r.p3.split('\n');
+    await expect(areas).toHaveCount(3);
+    await areas.nth(0).fill(busca);
+    await areas.nth(1).fill(obstaculo);
+    await areas.nth(2).fill(r.p4);
+    return;
+  }
+
+  await areas.first().fill(i === 0 ? r.p1 : r.p2);
+}
 
 test('a tela da oferta promete o dossiê inteiro e não pede dado nenhum', async ({ page }) => {
   await page.goto('/');
@@ -27,7 +50,10 @@ test('a tela da oferta promete o dossiê inteiro e não pede dado nenhum', async
   // A promessa da Tela 1, item por item. É ela que o dossiê tem que cumprir.
   await expect(main).toContainText('qual é a armadilha desse ponto e qual é o convite dele');
   await expect(main).toContainText('o gesto que a tua vida vem repetindo há anos');
-  await expect(main).toContainText('Uns oito minutos, escrevendo ou falando.');
+  await expect(main).toContainText('dois mitos ancestrais, milenares');
+  await expect(main).toContainText('Uns cinco minutos, escrevendo ou falando.');
+  // O heading de venda que a versão de 18/09 acrescentou.
+  await expect(main).toContainText('Descubra em que Ato da tua vida tu está');
 
   const texto = (await page.locator('body').innerText()).toLowerCase();
   for (const proibida of ['inteligência artificial', ' ia ', 'quiz', 'teste', 'resultado']) {
@@ -50,30 +76,18 @@ test('a tela de como responder chega inteira, com o exemplo de cena', async ({ p
   await expect(main).not.toContainText('armadilha');
 });
 
-test('as quatro perguntas aparecem na ordem, com o contador', async ({ page }) => {
+test('as três perguntas aparecem na ordem, com o contador', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Começar' }).click();
   await page.getByRole('button', { name: 'Entendi, vamos' }).click();
 
-  for (let i = 0; i < 4; i++) {
-    await expect(page.getByText(`${i + 1} de 4`)).toBeVisible();
+  for (let i = 0; i < 3; i++) {
+    await expect(page.getByText(`${i + 1} de 3`)).toBeVisible();
     await expect(page.getByRole('heading', { level: 1 })).toContainText(PERGUNTAS[i]);
 
-    const respostas = Object.values(fixture.respostas);
-    const areas = page.locator('textarea');
-
-    if (i === 2) {
-      // P3 tem dois campos empilhados.
-      await expect(areas).toHaveCount(2);
-      const [busca, obstaculo] = respostas[2].split('\n');
-      await areas.nth(0).fill(busca);
-      await areas.nth(1).fill(obstaculo);
-    } else {
-      await areas.first().fill(respostas[i]);
-    }
-
+    await preencherTela(page, i);
     await page.getByRole('button', { name: 'Enviar' }).click();
-    if (i < 3) await page.waitForTimeout(600);
+    if (i < 2) await page.waitForTimeout(600);
   }
 
   // Sem chave de API a leitura falha, e o que tem que aparecer é a tela de erro
@@ -109,7 +123,7 @@ test('a repescagem é uma no fluxo inteiro: gasta na P1 e a P2 segue sem ela', a
   await page.getByRole('button', { name: 'Enviar' }).click();
 
   // Segue pra P2, sem segunda repescagem na própria P1.
-  await expect(page.getByText('2 de 4')).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText('2 de 3')).toBeVisible({ timeout: 20_000 });
 
   /*
    * A cota é do fluxo, Prompt Mãe Seção 2. Esta resposta da P2 é o "assim não"
@@ -122,31 +136,26 @@ test('a repescagem é uma no fluxo inteiro: gasta na P1 e a P2 segue sem ela', a
     .fill('tenho buscado mais equilíbrio e presença, mas o trabalho consome');
   await page.getByRole('button', { name: 'Enviar' }).click();
 
-  await expect(page.getByText('3 de 4')).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText('3 de 3')).toBeVisible({ timeout: 20_000 });
   await expect(page.locator('main')).not.toContainText('Me dá um dia, um lugar');
 });
 
-test('a P4 não tem repescagem, mesmo com resposta curta', async ({ page }) => {
+test('a terceira tela não tem repescagem, mesmo com resposta curta', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Começar' }).click();
   await page.getByRole('button', { name: 'Entendi, vamos' }).click();
 
-  const respostas = Object.values(fixture.respostas);
-
-  for (let i = 0; i < 4; i++) {
-    const areas = page.locator('textarea');
-    if (i === 2) {
-      const [busca, obstaculo] = respostas[2].split('\n');
-      await areas.nth(0).fill(busca);
-      await areas.nth(1).fill(obstaculo);
-    } else {
-      await areas.first().fill(respostas[i]);
-    }
+  for (let i = 0; i < 3; i++) {
+    await preencherTela(page, i);
     await page.getByRole('button', { name: 'Enviar' }).click();
     await page.waitForTimeout(600);
   }
 
-  // A P4 canônica tem 13 palavras e a triagem do Prompt Mãe diz que ela basta.
+  /*
+   * A terceira tela pede três frases curtas, e o preço de nada mudar tem treze
+   * palavras no caso canônico. O portão da Seção 2 nunca repesca esta tela, e a
+   * triagem do Prompt Mãe 11.2 diz que ela basta assim.
+   */
   await expect(page.locator('main')).not.toContainText('Me dá um dia, um lugar');
 });
 

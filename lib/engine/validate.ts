@@ -108,6 +108,18 @@ const BANIDAS: { termo: string; re: RegExp }[] = [
   { termo: 'destino', re: /\b(?:teu|seu|o)\s+destino\b/i },
   { termo: 'universo', re: /\bo\s+universo\s+(?:te|conspira|quis|trouxe)/i },
   { termo: 'de uma vez por todas', re: /\bde\s+uma\s+vez\s+por\s+todas\b/i },
+  /**
+   * Prompt Mãe Seção 9, proibido 9, acrescentado em 18/09.
+   *
+   * A palavra oficial da casa é Movimento. O gesto é a ação concreta dentro
+   * dele, e trocar um pelo outro no dossiê apaga o nome que o método vende. O
+   * regex pega a construção em posição de nome, não a palavra "gesto" solta,
+   * que é português normal e aparece no dossiê canônico do Anexo 11.5.
+   */
+  {
+    termo: 'gesto do momento (a palavra é Movimento)',
+    re: /\bo\s+gesto\s+d(?:o\s+teu|o|esse|este)\s+momento\b/i,
+  },
 ];
 
 /**
@@ -190,11 +202,11 @@ const PISO_ATO_MOVIMENTO = 0.55;
  */
 const TETOS: { campo: keyof Leitura['dossie']; rotulo: string; teto: number }[] = [
   { campo: 'titulo', rotulo: 'o título', teto: 8 },
-  { campo: 'devolutiva', rotulo: 'a devolutiva', teto: 52 },
-  { campo: 'ato_texto', rotulo: 'o bloco do Ato', teto: 126 },
-  { campo: 'movimento_texto', rotulo: 'o bloco do Movimento', teto: 135 },
-  { campo: 'arquetipo_texto', rotulo: 'o bloco do arquétipo', teto: 50 },
-  { campo: 'fechamento', rotulo: 'o fechamento', teto: 62 },
+  { campo: 'devolutiva', rotulo: 'a devolutiva', teto: 55 },
+  { campo: 'ato_texto', rotulo: 'o bloco do Ato', teto: 138 },
+  { campo: 'movimento_texto', rotulo: 'o bloco do Movimento', teto: 265 },
+  { campo: 'arquetipo_texto', rotulo: 'o bloco do arquétipo', teto: 55 },
+  { campo: 'fechamento', rotulo: 'o fechamento', teto: 65 },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -348,10 +360,10 @@ export function validarAnalise(analise: Analise, respostas: Respostas): Resultad
    * rastreabilidade do Passo 5 proíbe.
    */
   for (const eco of analise.ecos) {
-    if (contarPalavras(eco.historia) >= 6) continue;
+    if (contarPalavras(eco.historia) >= 25) continue;
     dura(
       'eco_raso',
-      `O eco "${eco.historia}" só tem o nome da história. Escreve em uma ou duas linhas o que acontece nela, porque é esse resumo que vira o texto do dossiê.`,
+      `O eco "${eco.historia}" está curto demais. Conta a história: quem é o personagem, em que situação ele estava, o que aconteceu com ele e o que ele sentiu. Três ou quatro frases. A chamada 2 desenvolve isto em cinco a sete linhas e não tem outra fonte, então o que faltar aqui ela inventa.`,
     );
   }
 
@@ -433,7 +445,7 @@ export function validarDossie(
   /* --- contagem ------------------------------------------------- */
 
   const n = palavrasDossie(dossie);
-  const [min, max] = analise.material_fino ? [250, 320] : [320, 420];
+  const [min, max] = analise.material_fino ? [250, 320] : [420, 550];
   if (n < min || n > max) {
     dura(
       'tamanho_dossie',

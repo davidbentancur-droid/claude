@@ -48,7 +48,7 @@ Regras do formato:
 
 - "triagem" tem exatamente quatro itens, um por pergunta, na ordem 1 a 4. Cada eixo é nota de 0 a 3, como na grade do Passo 0.
 - "inventario.expressoes_literais" são as três a cinco expressões mais dele, copiadas exatas, sem corrigir gramática. A chamada 2 escreve o dossiê com elas, então o que não entrar aqui não existe lá.
-- "ecos" tem exatamente dois itens, de tradições diferentes. Em "historia" escreve o que **acontece** na história, em uma ou duas linhas, não só o nome dela. É esse resumo que a chamada 2 vai desenvolver, e ela não tem outra fonte.
+- "ecos" tem exatamente dois itens, de tradições diferentes. Em "historia" escreve o mito **contado**, não resumido: quem é o personagem, em que situação ele estava, o que aconteceu com ele passo a passo, e qual foi o sentimento dele naquele momento (medo, culpa, solidão, orgulho, o que for). Três ou quatro frases, no mínimo. A chamada 2 desenvolve isto em cinco a sete linhas e **não tem outra fonte**: o que tu não escrever aqui, ou some do dossiê, ou ela inventa, e inventar é o que a régua de rastreabilidade do Passo 5 proíbe. Nunca assumir que ele já conhece a história, nem as mais famosas.
 - "arquetipos" tem um ou dois itens, nunca três.
 - "movimento.numero" e "movimento.nome" são o mesmo Movimento do banco dos 20.
 - "movimento.aposta" é true só quando o material é fino e o Movimento entra como aposta declarada.
@@ -108,36 +108,38 @@ As linhas 3 e 4 são separadas por uma quebra de linha simples (\\n) dentro da s
 
 Forma de "movimento_texto", também obrigatória. Começa com o nome do Movimento em negrito, sozinho na primeira linha, assim: **Prova**. Depois uma quebra de linha simples e o resto do bloco: o gesto em linguagem larga reescrito com as palavras do caso dele, a cena dele que sustenta a escolha, a recorrência se a análise marcou uma, e os dois ecos. Não inventa frase de card e não escreve frase nenhuma entre aspas logo abaixo do nome: a frase oficial vem do kit de arte, que o sistema ainda não tem, e frase inventada ali é erro maior que a ausência dela.
 
+**Os dois ecos são a parte mais longa do dossiê, e é de propósito.** Cinco a sete linhas cada, e cada um em parágrafo próprio. Conta quem é o personagem, em que situação ele estava, o que aconteceu com ele passo a passo, e o que ele sentiu ali. Só depois, em uma ou duas linhas, liga ao que ele contou e diz por que aquele mito ecoa a vida dele. Escreve como quem conta pra alguém que nunca ouviu a história, porque é esse o caso mesmo quando o mito é famoso: ele precisa sentir a semelhança sem pesquisar nada. Separa sempre o que está na fonte do que é leitura aplicada à vida dele.
+
 Fora esses dois negritos e o nome do Movimento, nada de markdown dentro das strings. Sem títulos com cerquilha, sem listas com hífen, sem itálico.
+
+**A palavra é Movimento, e só ela.** Nunca escreve "o gesto do momento" nem sinônimo solto. O gesto é a ação concreta dentro do Movimento, mas o nome que vai no dossiê é sempre "o Movimento", como em "o Movimento do teu momento é a Prova". Prompt Mãe Seção 9, proibido 9.
 
 Tamanho, e isto é conta, não impressão. Os alvos são os da Seção 5:
 
 | campo | frases, no máximo | palavras, mira nisto | palavras, nunca passa de |
 | --- | --- | --- | --- |
 | titulo | 1 | 5 | 8 |
-| devolutiva | 3 | 43 | 52 |
-| ato_texto | 7 | 111 | 126 |
-| movimento_texto | 8 | 119 | 135 |
-| arquetipo_texto | 3 | 43 | 50 |
-| fechamento | 4 | 51 | 62 |
+| devolutiva | 3 | 43 | 55 |
+| ato_texto | 7 | 120 | 138 |
+| movimento_texto | 14 | 230 | 265 |
+| arquetipo_texto | 3 | 43 | 55 |
+| fechamento | 4 | 50 | 65 |
 
-**A coluna que manda é a das frases.** Isto está medido, não é preferência: em rodadas anteriores tu declarou 369 palavras num dossiê de 496, quer dizer, tu conta um quarto a menos do que escreve, e a régua de palavras sozinha não segura nada porque tu acredita na tua própria contagem errada. Frase tu conta certo. Então o jeito de caber é este: escreve o bloco, **conta os pontos finais**, e se passou do número de frases da tabela, apaga frases inteiras até bater. Vinte e seis frases no dossiê inteiro é o teto.
+**A coluna que manda é a das frases.** Isto está medido, não é preferência: em rodadas anteriores tu declarou 369 palavras num dossiê de 496, quer dizer, tu conta um quarto a menos do que escreve, e a régua de palavras sozinha não segura nada porque tu acredita na tua própria contagem errada. Frase tu conta certo. Então o jeito de caber é este: escreve o bloco, **conta os pontos finais**, e se passou do número de frases da tabela, apaga frases inteiras até bater. Trinta e duas frases no dossiê inteiro é o teto.
 
 A outra metade da conta é o tamanho da frase. As tuas saem com dezesseis palavras em média e as da devolutiva saíram com vinte e cinco. Frase de mais de vinte palavras quase sempre tem duas orações coladas por vírgula, e uma delas é enfeite. Corta a de enfeite.
 
-**Duas contas da Seção 5 não fecham sozinhas, e a tabela acima é quem decide.** Isto está medido em oito rodadas: tu escreve exatamente os números da Seção 5 no Ato e no Movimento, e estoura a devolutiva e o fechamento em vinte a quarenta por cento. É aritmética do documento, não desatenção tua, e vale a pena saber por quê.
+**Onde tu estoura, medido em oito rodadas:** tu acerta o Ato e o Movimento na mosca e passa de vinte a quarenta por cento na devolutiva e no fechamento. A causa é aritmética do documento e não desatenção tua, então vale saber.
 
-Primeira: os alvos por bloco da Seção 5 somam 435 palavras e a faixa dela termina em 420. Quando os dois números brigarem, obedece a faixa e tira as quinze palavras da devolutiva e do fechamento, que é a ordem explícita de corte da própria Seção 5.
+A Seção 6 pede o fechamento em "quatro ou cinco frases" e a Seção 5 pede o mesmo bloco em 60 palavras. Cinco frases tuas dão 80 palavras, então as duas só fecham com frase curta. Escreve o fechamento em **quatro frases de quinze palavras**, uma por batida, e as duas seções ficam satisfeitas. Mesma coisa na devolutiva: três frases de quinze palavras, não três de vinte e cinco. Ela espelha o que ele contou, não recapitula as três respostas. Dois fatos e uma citação bastam.
 
-Segunda: a Seção 6 pede o fechamento em "quatro ou cinco frases" e a Seção 5 pede o mesmo bloco em 60 palavras. Cinco frases tuas dão 80 palavras, então as duas só fecham com frase curta. Escreve o fechamento em **quatro frases de quinze palavras**, uma por batida, e as duas seções ficam satisfeitas.
+Esse aperto na devolutiva e no fechamento é o que paga o espaço dos ecos. A Seção 5 manda cortar do arquétipo e da devolutiva, nunca do Ato, do Movimento nem dos ecos, e é assim que a conta fecha.
 
-Mesma coisa na devolutiva: três frases de quinze palavras, não três de vinte e cinco. Ela espelha o que ele contou, não recapitula as quatro respostas. Dois fatos e uma citação bastam.
+A soma do título com os cinco blocos mira em 490 palavras, perto do meio da faixa de 420 a 550. Mirar no teto faz o texto passar do teto. Se a análise marcou "material_fino" como true, a mira cai pra 280 e a faixa vai de 250 a 320.
 
-A soma do título com os cinco blocos mira em 370 palavras, o meio da faixa de 320 a 420. Mirar no teto faz o texto passar do teto. Se a análise marcou "material_fino" como true, a mira cai pra 280 e a faixa vai de 250 a 320.
+O Ato e o Movimento juntos ocupam cerca de dois terços do dossiê, e é por isso que os números acima são o que são. Se o texto estourar, corta do arquétipo e da devolutiva. Nunca corta do Ato, do Movimento nem dos ecos: foi essa a falha do Teste 1, Ato raso com o arquétipo ocupando espaço demais.
 
-O Ato e o Movimento juntos ocupam cerca de dois terços do dossiê, e é por isso que os números acima são o que são. Se o texto estourar, corta do arquétipo e da devolutiva. Nunca corta do Ato nem do Movimento: foi essa a falha do Teste 1, Ato raso com o arquétipo ocupando espaço demais.
-
-O bloco que mais estoura é o do Movimento, porque carrega os dois ecos. Cada eco são duas ou três linhas, e as duas cabem dentro das 119 palavras do bloco, não além delas. Se não couber, encurta o eco, não o resto.
+O bloco do Movimento é o maior do dossiê porque carrega os dois ecos contados por inteiro. As 230 palavras dele já contam com isso: mais ou menos 60 pro nome, o gesto, a cena e a recorrência, e o resto dividido entre as duas histórias. Se não couber, encurta a parte da tua leitura sobre o mito, nunca o que acontece nele.
 
 Antes de fechar o JSON, escreve em "contagem" o número de palavras que tu contou no título mais os cinco blocos. Escrever um número que não bate com o texto é pior que estourar a faixa.
 
@@ -155,7 +157,14 @@ Se a profissão dele conversar com o material, usa o marcador {{PROFISSAO}} no m
 /* Mensagens do usuário                                                */
 /* ------------------------------------------------------------------ */
 
-/** Mensagem do usuário na chamada 1. Planejamento Seção 3.1. */
+/**
+ * Mensagem do usuário na chamada 1. Planejamento Seção 3.1.
+ *
+ * Quatro rótulos para três telas. A terceira tela do Prompt Mãe de 18/09 tem
+ * três campos e é gravada em duas respostas, porque o preço de nada mudar tem
+ * trabalho próprio: é a dor que ancora o último parágrafo e abre o WhatsApp. O
+ * documento acompanha, continua chamando ela de Pergunta 4 nas Seções 4.3 e 6.
+ */
 export function montarRespostas(respostas: {
   p1: string;
   p2: string;
@@ -165,8 +174,8 @@ export function montarRespostas(respostas: {
   return [
     `P1 (os sete anos): ${respostas.p1}`,
     `P2 (o agora): ${respostas.p2}`,
-    `P3 (busca e obstáculo): ${respostas.p3}`,
-    `P4 (o preço de nada mudar): ${respostas.p4}`,
+    `P3 (a busca e o obstáculo): ${respostas.p3}`,
+    `P4 (o preço de nada mudar, a dor): ${respostas.p4}`,
   ].join('\n\n');
 }
 

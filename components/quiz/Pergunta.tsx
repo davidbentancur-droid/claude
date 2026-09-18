@@ -3,39 +3,44 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { AUDIO, CONTADOR, EXEMPLOS_ROTULO, PERGUNTAS, REPESCAGEM } from '@/lib/copy';
-import type { Pergunta as DadosPergunta } from '@/lib/copy';
+import type { NumeroPergunta, Pergunta as DadosPergunta } from '@/lib/copy';
 
 import { AreaTexto } from '../ui/Campo';
 import { Botao } from '../ui/Botao';
 import { Microfone } from '../ui/Microfone';
 
 /**
- * Telas 2 a 5. Layout idêntico nas quatro. Planejamento Seção 1.
+ * Telas 2 a 4. Layout idêntico nas três. Planejamento Seção 1.
  *
- * A P3 tem dois campos empilhados e é salva como uma resposta só, concatenada
- * com quebra de linha. Ela também nunca tem repescagem, porque a pergunta é
- * curta por desenho.
+ * A P3 tem três campos empilhados: a busca, o obstáculo e o preço de nada
+ * mudar. Ela nunca tem repescagem, porque as três partes pedem frase e não
+ * cena.
+ *
+ * O componente não decide onde cada campo é gravado. Ele devolve as partes na
+ * ordem da tela, e quem as agrupa nas respostas do banco é `agruparCampos` em
+ * `lib/copy.ts`, porque esse mapeamento é regra do Prompt Mãe e não de layout.
  */
 
-export type Envio = { texto: string; via: 'texto' | 'audio' };
+export type Envio = { partes: string[]; via: 'texto' | 'audio' };
 
 export function Pergunta({
   numero,
-  valorInicial,
+  valoresIniciais,
   onEnviar,
   ocupado,
 }: {
-  numero: 1 | 2 | 3 | 4;
-  valorInicial: string;
+  numero: NumeroPergunta;
+  /** Um valor por campo da tela, na ordem. Telas de campo único recebem um só. */
+  valoresIniciais: string[];
   onEnviar: (envio: Envio) => void;
   ocupado: boolean;
 }) {
   const dados = PERGUNTAS.find((p) => p.numero === numero) as DadosPergunta;
+  const quantos = dados.campos?.length ?? 1;
 
-  // A P3 guarda dois campos e junta na hora de enviar.
-  const partes = valorInicial.split('\n');
-  const [texto, setTexto] = useState(dados.campos ? partes[0] ?? '' : valorInicial);
-  const [texto2, setTexto2] = useState(dados.campos ? partes.slice(1).join('\n') : '');
+  const [partes, setPartes] = useState<string[]>(() =>
+    Array.from({ length: quantos }, (_, i) => valoresIniciais[i] ?? ''),
+  );
   const [usouAudio, setUsouAudio] = useState(false);
 
   const primeiro = useRef<HTMLDivElement>(null);
@@ -44,20 +49,20 @@ export function Pergunta({
     primeiro.current?.querySelector('textarea')?.focus();
   }, [numero]);
 
-  const valor = dados.campos
-    ? [texto.trim(), texto2.trim()].filter(Boolean).join('\n')
-    : texto.trim();
+  // Toda parte é obrigatória: a tela de três campos só segue com os três.
+  const podeEnviar = partes.every((p) => p.trim().length > 0);
 
-  const podeEnviar = dados.campos
-    ? texto.trim().length > 0 && texto2.trim().length > 0
-    : texto.trim().length > 0;
+  function escrever(i: number, valor: string) {
+    setPartes((atual) => atual.map((p, j) => (j === i ? valor : p)));
+  }
 
-  function receberAudio(qual: 1 | 2, transcrito: string) {
+  function receberAudio(i: number, transcrito: string) {
     setUsouAudio(true);
-    const juntar = (anterior: string) =>
-      anterior.trim().length > 0 ? `${anterior.trim()} ${transcrito}` : transcrito;
-    if (qual === 1) setTexto(juntar);
-    else setTexto2(juntar);
+    setPartes((atual) =>
+      atual.map((p, j) =>
+        j === i ? (p.trim().length > 0 ? `${p.trim()} ${transcrito}` : transcrito) : p,
+      ),
+    );
   }
 
   return (
@@ -94,33 +99,20 @@ export function Pergunta({
         )}
 
         <div style={{ display: 'grid', gap: '1.25rem' }} ref={primeiro}>
-          <div>
-            <AreaTexto
-              rotulo={dados.campos?.[0].rotulo}
-              value={texto}
-              onChange={(e) => setTexto(e.target.value)}
-              linhasMinimas={dados.campos ? 2 : 5}
-              disabled={ocupado}
-            />
-            <div style={{ marginTop: '0.75rem' }}>
-              <Microfone onTexto={(t) => receberAudio(1, t)} desabilitado={ocupado} />
-            </div>
-          </div>
-
-          {dados.campos && (
-            <div>
+          {partes.map((valor, i) => (
+            <div key={dados.campos?.[i].chave ?? 'unico'}>
               <AreaTexto
-                rotulo={dados.campos[1].rotulo}
-                value={texto2}
-                onChange={(e) => setTexto2(e.target.value)}
-                linhasMinimas={2}
+                rotulo={dados.campos?.[i].rotulo}
+                value={valor}
+                onChange={(e) => escrever(i, e.target.value)}
+                linhasMinimas={dados.campos ? 2 : 5}
                 disabled={ocupado}
               />
               <div style={{ marginTop: '0.75rem' }}>
-                <Microfone onTexto={(t) => receberAudio(2, t)} desabilitado={ocupado} />
+                <Microfone onTexto={(t) => receberAudio(i, t)} desabilitado={ocupado} />
               </div>
             </div>
-          )}
+          ))}
         </div>
 
         {usouAudio && (
@@ -131,7 +123,7 @@ export function Pergunta({
 
         <div style={{ marginTop: '2rem' }}>
           <Botao
-            onClick={() => onEnviar({ texto: valor, via: usouAudio ? 'audio' : 'texto' })}
+            onClick={() => onEnviar({ partes, via: usouAudio ? 'audio' : 'texto' })}
             disabled={!podeEnviar || ocupado}
           >
             {REPESCAGEM.botao}
@@ -143,7 +135,7 @@ export function Pergunta({
 }
 
 /**
- * Repescagem. Uma vez só por pergunta, entre a resposta e a próxima.
+ * Repescagem. Uma no fluxo inteiro, entre a resposta e a próxima pergunta.
  * Prompt Mãe Seção 2, regra de resposta pobre.
  */
 export function Repescagem({

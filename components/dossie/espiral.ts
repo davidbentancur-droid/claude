@@ -5,15 +5,20 @@ import type { Ato } from '@/lib/movimentos';
  *
  * Uma linha horizontal corta o círculo ao meio. A metade de baixo é bloco único
  * e mais denso, a Iniciação. A metade de cima se divide em dois quartos por uma
- * linha vertical: superior esquerdo é Partida, superior direito é Retorno. Uma
+ * linha vertical: superior direito é Partida, superior esquerdo é Retorno. Uma
  * seta sai do quarto do Retorno, rompe a borda e sobe pra um círculo seguinte.
  *
  * Sem a seta vira roda que repete, e o método não é isso. É espiral: o mesmo
  * gesto voltando mais fundo, numa altura diferente.
  *
+ * **O círculo é lido em horário, como relógio**, e isso mudou em 18/09: antes a
+ * Partida ficava à esquerda e a travessia corria ao contrário. Agora o sentido
+ * é Partida (12h para 3h), Iniciação (3h por baixo até 9h), Retorno (9h para
+ * 12h), e a seta sai pela esquerda.
+ *
  * Coordenadas em ângulo de matemática (anti-horário, y pra cima) e convertidas
- * pra tela na hora de escrever o ponto. O sentido da travessia é
- * Partida (12h para 9h), Iniciação (9h por baixo até 3h), Retorno (3h para 12h).
+ * pra tela na hora de escrever o ponto. Como a travessia é horária, as faixas
+ * de `FAIXA` andam com o ângulo diminuindo.
  */
 
 export type Geometria = ReturnType<typeof montarGeometria>;
@@ -47,11 +52,16 @@ const FRACAO = { começo: 0.22, meio: 0.5, fim: 0.78 } as const;
 
 export type Posicao = keyof typeof FRACAO;
 
-/** Faixa angular de cada Ato, no sentido da travessia. */
+/**
+ * Faixa angular de cada Ato, no sentido da travessia.
+ *
+ * Horária, então o ângulo decresce: 12h é 90, 3h é 0, 6h é -90, 9h é -180, e a
+ * volta fecha em -270, que é 12h de novo numa altura acima.
+ */
 const FAIXA: Record<Ato, [number, number]> = {
-  Partida: [90, 180],
-  Iniciação: [180, 360],
-  Retorno: [360, 450],
+  Partida: [90, 0],
+  Iniciação: [0, -180],
+  Retorno: [-180, -270],
 };
 
 export function montarGeometria(cx: number, cy: number, r: number) {
@@ -59,26 +69,28 @@ export function montarGeometria(cx: number, cy: number, r: number) {
   const [xd, yd] = ponto(cx, cy, r, 0);
   const [xt, yt] = ponto(cx, cy, r, 90);
 
-  // O círculo seguinte, acima e à direita, na altura de cima da espiral.
+  // O círculo seguinte, acima e à esquerda, na altura de cima da espiral.
+  // Trocou de lado em 18/09 junto com o Retorno, de onde a seta sai.
   const proximoR = r * 0.36;
-  const proximoCx = cx + r * 0.95;
+  const proximoCx = cx - r * 0.95;
   const proximoCy = cy - r * 1.58;
 
   // A seta sai do quarto do Retorno, rompe a borda e entra pela base do círculo
   // seguinte. Saída e chegada são pontos reais das duas circunferências, e a
   // ponta é calculada pela direção de chegada. Curva simples, sem S.
-  const [sx, sy] = ponto(cx, cy, r, 55);
-  const [ex, ey] = ponto(proximoCx, proximoCy, proximoR, 250);
+  const [sx, sy] = ponto(cx, cy, r, 125);
+  const [ex, ey] = ponto(proximoCx, proximoCy, proximoR, 290);
 
   const dx = ex - sx;
   const dy = ey - sy;
   const comprimento = Math.hypot(dx, dy);
 
   // Controles entre os dois pontos, empurrados um pouco pra fora, o que dá a
-  // curvatura de quem está saindo de uma volta e entrando na seguinte.
-  const c1x = sx + dx * 0.42 + comprimento * 0.16;
+  // curvatura de quem está saindo de uma volta e entrando na seguinte. O empurrão
+  // é pra esquerda agora, espelhando o lado por onde a seta sai.
+  const c1x = sx + dx * 0.42 - comprimento * 0.16;
   const c1y = sy + dy * 0.34;
-  const c2x = sx + dx * 0.72 + comprimento * 0.1;
+  const c2x = sx + dx * 0.72 - comprimento * 0.1;
   const c2y = sy + dy * 0.76;
 
   const dirX = (ex - c2x) / Math.hypot(ex - c2x, ey - c2y);
@@ -106,16 +118,19 @@ export function montarGeometria(cx: number, cy: number, r: number) {
     /** Divide só a metade de cima. */
     vertical: { x1: cx, y1: cy, x2: xt, y2: yt, comprimento: r },
 
+    // Os quartos de cima trocaram de lado em 18/09. A Partida virou o superior
+    // direito e o Retorno o superior esquerdo, pra o círculo ser lido em
+    // horário. As cunhas são as mesmas, o que mudou foi de quem é cada uma.
     setores: {
-      Partida: setor(cx, cy, r, 90, 180),
-      Retorno: setor(cx, cy, r, 0, 90),
+      Partida: setor(cx, cy, r, 0, 90),
+      Retorno: setor(cx, cy, r, 90, 180),
       Iniciação: setor(cx, cy, r, 180, 360),
     } satisfies Record<Ato, string>,
 
     /** Onde o nome do Ato aceso é escrito, dentro do setor. */
     rotulos: {
-      Partida: ponto(cx, cy, r * 0.54, 135),
-      Retorno: ponto(cx, cy, r * 0.54, 45),
+      Partida: ponto(cx, cy, r * 0.54, 45),
+      Retorno: ponto(cx, cy, r * 0.54, 135),
       Iniciação: ponto(cx, cy, r * 0.5, 270),
     } satisfies Record<Ato, [number, number]>,
 
@@ -160,5 +175,22 @@ export const DUALTONE: Record<Ato, [string, string]> = {
   Retorno: ['#D8C27A', '#97B392'],
 };
 
+/**
+ * O creme antigo. A Seção 7 de 18/09 tirou ele do fundo da placa, que passou a
+ * ser transparente, mas ele fica aqui porque a marca da posição ainda usa esse
+ * tom como anel, pra sobreviver por cima do setor aceso.
+ */
 export const PAPEL = '#F2E8D5';
+
+/** A tinta quente do método. Serve sobre fundo claro. */
 export const TINTA = '#1E1B18';
+
+/**
+ * O dourado da marca, e a tinta padrão da placa desde 18/09.
+ *
+ * A Seção 7 aceita dourado ou a tinta #1E1B18 sobre o fundo transparente. Aqui
+ * é o dourado, e não é escolha de gosto: a página é escura, e #1E1B18 sobre ela
+ * some. Exportada em PNG e caindo sobre fundo claro, a placa em dourado continua
+ * legível. O contrário, tinta escura sobre a página escura, não funcionaria.
+ */
+export const OURO = '#C9A85C';
