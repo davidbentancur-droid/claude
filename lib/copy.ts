@@ -324,6 +324,25 @@ export const DOWNSELL = {
   voltar: 'Voltar pro meu dossiê',
 } as const;
 
+/**
+ * As três descrições de Ato, transcritas da arte oficial da espiral.
+ *
+ * Não é copy nova: são exatamente as palavras que o Adriano desenhou dentro do
+ * arquivo. Elas vivem aqui porque no celular a arte é reduzida a um terço, e o
+ * texto que está desenhado nela fica com quatro pixels e meio, que é ilegível.
+ * Como texto de verdade ele fica no tamanho do corpo, dá pra selecionar, o
+ * leitor de tela lê, e o Ato dele pode ficar aceso enquanto os outros dois
+ * apagam, que é o que a Seção 7 pede e a imagem sozinha não entrega.
+ */
+export const ATOS_DESCRICAO = {
+  Partida:
+    'O chamado aparece com nome e custo. Seguir exige abrir mão de algo importante, e é aí que a hesitação começa.',
+  Iniciação:
+    'A crise já está em curso. A estrutura antiga é destruída, questionada ou limpada à força, e ainda não existe saída visível.',
+  Retorno:
+    'A pior parte passou, e a volta é pra um lugar que já não é o mesmo. O trabalho agora é integrar o que mudou.',
+} as const;
+
 export const INFOGRAFICO = {
   exportar: 'Guardar a imagem',
   aposta: 'Aposta, pelo pouco que tu contou.',

@@ -372,11 +372,24 @@ q.dele {
   margin-inline: auto;
 }
 
+/*
+ * A caixa que a câmera move. No desktop ela não faz nada e a arte aparece
+ * inteira. No celular é ela que é ampliada e empurrada pro quarto dele.
+ */
+.espiral-arte__camera {
+  position: relative;
+}
+
 .espiral-arte__base,
 .espiral-arte__nuvens {
   display: block;
   width: 100%;
   height: auto;
+}
+
+/* A legenda em texto só existe no celular. Ver a regra de baixo. */
+.espiral-arte__legenda {
+  display: none;
 }
 
 /*
@@ -447,6 +460,130 @@ q.dele {
   max-width: var(--leitura);
   margin: 0.75rem auto 0;
   text-align: center;
+}
+
+/* ------------------------------------------------------------------ *
+ * A montagem de celular.
+ *
+ * Abaixo de 760 px a arte inteira não serve: são 1280 px de slide reduzidos a
+ * menos de um terço, e o texto desenhado dentro dela fica com quatro pixels e
+ * meio. Foi medido. Então aqui a arte é cortada no círculo, que passa a ocupar
+ * a largura toda, e o texto volta como texto de verdade abaixo.
+ * ------------------------------------------------------------------ */
+
+@media (max-width: 760px) {
+  /*
+   * O corte. A caixa vira quase quadrada e a imagem é ampliada dentro dela até
+   * o círculo preencher tudo.
+   *
+   * Os números saem da medição do arquivo: o círculo ocupa de 32% a 68% na
+   * horizontal, então a imagem precisa ter 1280/461 da largura da caixa, e o
+   * deslocamento põe a borda esquerda do círculo no zero.
+   */
+  .espiral-arte__palco {
+    aspect-ratio: 461 / 470;
+  }
+
+  /*
+   * A câmera precisa ocupar a caixa inteira. As imagens dentro dela são
+   * absolutas no celular, então sem isto ela fica com altura zero, e um
+   * `transform-origin` em porcentagem no eixo Y vira sempre zero: o zoom
+   * entrava pelo topo em vez de entrar no quarto dele.
+   */
+  .espiral-arte__camera {
+    position: absolute;
+    inset: 0;
+  }
+
+  .espiral-arte__base,
+  .espiral-arte__nuvens {
+    position: absolute;
+    width: 277.7%;
+    max-width: none;
+    left: -88.9%;
+    top: -26.25%;
+  }
+
+  /*
+   * A câmera entrando.
+   *
+   * Ela tem trabalho, não é enfeite: a arte vem com os três Atos acesos iguais
+   * e não dá pra apagar dois sem apagar as descrições junto. Então em vez de
+   * apagar o resto, a câmera vai até o quarto dele. Dois segundos parada no
+   * círculo inteiro, pra ele ver a volta, e três segundos entrando.
+   *
+   * Uma vez só, disparada quando a figura aparece na tela. Repetir a cada
+   * rolagem viraria enjoo.
+   */
+  .espiral-arte__camera {
+    transform-origin: var(--camera-x) var(--camera-y);
+    transition: transform 3s cubic-bezier(0.33, 0, 0.2, 1) 2s;
+  }
+
+  .espiral-arte--entrou .espiral-arte__camera {
+    transform: scale(1.75);
+  }
+
+  /*
+   * A marca acompanha a câmera, então precisa encolher junto, senão ela cresce
+   * 75% e vira uma mancha.
+   */
+  .espiral-arte--entrou .espiral-arte__marca {
+    transform: scale(0.57);
+  }
+
+  .espiral-arte__marca {
+    transition: transform 3s cubic-bezier(0.33, 0, 0.2, 1) 2s;
+  }
+
+  /* Os três Atos como texto, que é a metade que faz a coisa funcionar aqui. */
+  .espiral-arte__legenda {
+    display: grid;
+    gap: 0.75rem;
+    max-width: var(--leitura);
+    margin: 1.5rem auto 0;
+    padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+  }
+
+  .espiral-arte__ato {
+    margin: 0;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    /* Os outros dois apagados, como a Seção 7 manda. */
+    color: var(--ink-2);
+    opacity: 0.45;
+    transition: opacity 600ms linear 4s;
+  }
+
+  .espiral-arte__ato b {
+    font-family: var(--fonte-display), Georgia, serif;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.8125rem;
+    color: inherit;
+  }
+
+  /* O dele aceso, e em dourado como na arte. */
+  .espiral-arte__ato--dele {
+    color: var(--ink);
+    opacity: 1;
+  }
+
+  .espiral-arte__ato--dele b {
+    color: var(--gold);
+  }
+}
+
+/*
+ * Sem movimento, a câmera não entra e o quarto dele fica sem apontar. Aí quem
+ * assume é a legenda, que já nasce com o dele aceso e não depende de animação
+ * nenhuma pra dizer qual é.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .espiral-arte--entrou .espiral-arte__camera {
+    transform: none;
+  }
 }
 
 /* ------------------------------------------------------------------ *
