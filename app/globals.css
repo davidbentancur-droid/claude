@@ -340,6 +340,116 @@ q.dele {
 }
 
 /* ------------------------------------------------------------------ *
+ * A espiral na arte oficial, com as nuvens andando.
+ *
+ * Ela sai da coluna de leitura e vai de ponta a ponta. A arte é um slide de
+ * 1280 de largura, e espremida nos 640 px da coluna o texto que está desenhado
+ * dentro dela fica pequeno demais pra ler.
+ * ------------------------------------------------------------------ */
+
+/*
+ * A largura vem de `style` inline, medida em JS, e não de `100vw`.
+ *
+ * `100vw` conta a barra de rolagem: numa página que rola dá uns 8 px a mais
+ * que o conteúdo, e o navegador abre uma barra horizontal por causa deles. Foi
+ * medido, 773 contra 765. Tentei conter com `overflow-x: clip` no body e no
+ * html, e nenhum dos dois segurou, porque o overflow do body é propagado pro
+ * viewport e o do html vira o do próprio viewport. `clientWidth` é o número
+ * exato e não depende de nenhuma dessas regras.
+ *
+ * Antes da hidratação a figura fica na largura da coluna, que é seguro: sem
+ * largura medida, nada transborda.
+ */
+.espiral-arte {
+  margin-block: 2.5rem;
+  margin-inline: auto;
+}
+
+.espiral-arte__palco {
+  position: relative;
+  overflow: hidden;
+  max-width: 1280px;
+  margin-inline: auto;
+}
+
+.espiral-arte__base,
+.espiral-arte__nuvens {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/*
+ * A camada que anda.
+ *
+ * Uma segunda cópia da arte por cima, recortada só onde há nuvem, andando
+ * devagar. Onde a máscara é transparente, só a camada parada aparece, e é por
+ * isso que o círculo não desliza junto.
+ *
+ * O recorte é o cruzamento de duas máscaras, e isso não é preciosismo. Com só
+ * a horizontal, a camada de cima passava por cima dos blocos de texto da arte,
+ * que ficam nas bordas superiores, e o resultado era todo o texto fantasmado em
+ * duas cópias defasadas. A vertical corta a metade de cima fora, então sobram
+ * os dois cantos de baixo, que é exatamente onde a nuvem está desenhada e onde
+ * não há uma letra.
+ *
+ * Dois por cento de amplitude em cinquenta segundos. Mais que isso vira
+ * parallax de banner, que é o oposto do que a arte é.
+ */
+.espiral-arte__nuvens {
+  position: absolute;
+  inset: 0;
+
+  -webkit-mask-image:
+    linear-gradient(to right, #000 0 8%, transparent 12%, transparent 82%, #000 87% 100%),
+    linear-gradient(to bottom, transparent 0 42%, #000 62% 100%);
+  -webkit-mask-composite: source-in;
+
+  mask-image:
+    linear-gradient(to right, #000 0 8%, transparent 12%, transparent 82%, #000 87% 100%),
+    linear-gradient(to bottom, transparent 0 42%, #000 62% 100%);
+  mask-composite: intersect;
+
+  animation: nuvens 50s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes nuvens {
+  from {
+    transform: translate3d(-0.9%, 0, 0) scale(1.03);
+  }
+  to {
+    transform: translate3d(0.9%, -0.5%, 0) scale(1.05);
+  }
+}
+
+/*
+ * A marca do Ato dele. Um ponto dourado respirando sobre o quarto certo.
+ *
+ * A arte vem com os três Atos acesos iguais, e a Seção 7 pede o dele aceso e os
+ * outros apagados. Sem a arte em três estados, marcar é o que dá pra fazer sem
+ * mentir: escurecer os outros dois apagaria as descrições escritas ali, que são
+ * conteúdo.
+ */
+.espiral-arte__marca {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  background: var(--gold);
+  box-shadow: 0 0 0 1px rgba(14, 12, 10, 0.9);
+  animation: respirar 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.espiral-arte__aposta {
+  display: block;
+  max-width: var(--leitura);
+  margin: 0.75rem auto 0;
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------ *
  * Downsell. A entrada do título, palavra por palavra.
  *
  * Único movimento da página, e ele tem trabalho: quem chega ali acabou de

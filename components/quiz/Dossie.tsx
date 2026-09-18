@@ -8,7 +8,7 @@ import type { DossiePublico } from '@/lib/render';
 import { rastrear } from '@/lib/tracking';
 
 import { Helice } from '../dossie/Helice';
-import { Infografico } from '../dossie/Infografico';
+import { EspiralArte } from '../dossie/EspiralArte';
 import { Texto } from '../dossie/Texto';
 import { VslEmbed } from '../dossie/VslEmbed';
 
@@ -39,7 +39,13 @@ export function Dossie({ dossie }: { dossie: DossiePublico }) {
 
         <Bloco bloco={dossie.ato} />
 
-        <Infografico dados={dossie.infografico} />
+        {/*
+          A espiral na arte oficial, entre o Ato e o Movimento, que é onde a
+          Seção 7 manda. Ela substituiu o SVG que a gente desenhava: o
+          acabamento que a Seção cobra vem da mão de quem desenhou, não de
+          `<path>`.
+        */}
+        <EspiralArte dados={dossie.infografico} />
 
         <Bloco bloco={dossie.movimento} />
         <Bloco bloco={dossie.arquetipo} />
