@@ -5,15 +5,25 @@
  * precisa ser literal. Nada de acesso dinâmico por nome aqui.
  */
 
+import { urlDeEmbed } from './embed';
+
 export const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID ?? '';
 export const gtmId = process.env.NEXT_PUBLIC_GTM_ID ?? '';
-export const vslEmbedUrl = process.env.NEXT_PUBLIC_VSL_EMBED_URL ?? '';
+
+/**
+ * As envs de vídeo aceitam o link que a pessoa tem na mão, não só o de embed.
+ * `urlDeEmbed` converte, e o porquê está lá: link de `watch?v=` dentro de
+ * iframe dá retângulo preto sem erro nenhum.
+ */
+export const vslEmbedUrl = urlDeEmbed(process.env.NEXT_PUBLIC_VSL_EMBED_URL ?? '');
 
 /** WhatsApp do Adriano. É pra onde vai o botão preenchido, abaixo da VSL. */
 export const whatsappUrl = process.env.NEXT_PUBLIC_WHATSAPP_URL ?? '';
 
 /** Vídeo da página de downsell, o Estoicismo nos Mitos. */
-export const downsellVslEmbedUrl = process.env.NEXT_PUBLIC_DOWNSELL_VSL_EMBED_URL ?? '';
+export const downsellVslEmbedUrl = urlDeEmbed(
+  process.env.NEXT_PUBLIC_DOWNSELL_VSL_EMBED_URL ?? '',
+);
 
 /** Checkout direto do downsell. O botão da oferta aponta pra cá. */
 export const downsellCheckoutUrl = process.env.NEXT_PUBLIC_DOWNSELL_CHECKOUT_URL ?? '';
