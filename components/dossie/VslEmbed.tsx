@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 
 import { VSL } from '@/lib/copy';
-import { temVsl, temWhatsapp, vslEmbedUrl, whatsappUrl } from '@/lib/public-env';
+import { temVsl, temWhatsapp, vslAspecto, vslEmbedUrl, whatsappUrl } from '@/lib/public-env';
 import { rastrear } from '@/lib/tracking';
+
+import { Player, PlayerVazio } from '../video/Player';
 
 /**
  * A VSL. Planejamento Seção 7.
@@ -53,30 +55,10 @@ export function VslEmbed() {
       </p>
 
       {temVsl ? (
-        <div style={{ aspectRatio: '16 / 9', border: '1px solid var(--line)' }}>
-          <iframe
-            src={vslEmbedUrl}
-            title="Vídeo"
-            width="100%"
-            height="100%"
-            style={{ display: 'block', border: 0 }}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-            allowFullScreen
-          />
-        </div>
+        <Player src={vslEmbedUrl} aspecto={vslAspecto} titulo="Vídeo" />
       ) : (
         process.env.NODE_ENV !== 'production' && (
-          <div
-            style={{
-              aspectRatio: '16 / 9',
-              border: '1px solid var(--line)',
-              background: 'var(--bg-2)',
-              display: 'grid',
-              placeItems: 'center',
-            }}
-          >
-            <span className="micro">{VSL.placeholder}</span>
-          </div>
+          <PlayerVazio aspecto={vslAspecto} texto={VSL.placeholder} />
         )
       )}
 

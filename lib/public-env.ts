@@ -17,6 +17,13 @@ export const gtmId = process.env.NEXT_PUBLIC_GTM_ID ?? '';
  */
 export const vslEmbedUrl = urlDeEmbed(process.env.NEXT_PUBLIC_VSL_EMBED_URL ?? '');
 
+/**
+ * A forma do vídeo, como em CSS. A VSL do Adriano é vertical, então o default
+ * da casa não serve pra ela e a env existe pra isso.
+ */
+export const vslAspecto = process.env.NEXT_PUBLIC_VSL_ASPECTO ?? '16 / 9';
+export const downsellAspecto = process.env.NEXT_PUBLIC_DOWNSELL_VSL_ASPECTO ?? '16 / 9';
+
 /** WhatsApp do Adriano. É pra onde vai o botão preenchido, abaixo da VSL. */
 export const whatsappUrl = process.env.NEXT_PUBLIC_WHATSAPP_URL ?? '';
 

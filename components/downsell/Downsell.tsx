@@ -5,6 +5,7 @@ import { Fragment, useEffect, useRef } from 'react';
 
 import { DOWNSELL, RODAPE } from '@/lib/copy';
 import {
+  downsellAspecto,
   downsellCheckoutUrl,
   downsellVslEmbedUrl,
   temDownsellCheckout,
@@ -13,6 +14,7 @@ import {
 import { rastrear } from '@/lib/tracking';
 
 import { Helice } from '../dossie/Helice';
+import { Player, PlayerVazio } from '../video/Player';
 
 /**
  * A segunda oferta.
@@ -86,29 +88,13 @@ export function Downsell() {
 
         <div ref={ref}>
           {temDownsellVsl ? (
-            <div style={{ aspectRatio: '16 / 9', border: '1px solid var(--line)' }}>
-              <iframe
-                src={downsellVslEmbedUrl}
-                title="Vídeo da oferta"
-                width="100%"
-                height="100%"
-                style={{ display: 'block', border: 0 }}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                allowFullScreen
-              />
-            </div>
+            <Player
+              src={downsellVslEmbedUrl}
+              aspecto={downsellAspecto}
+              titulo="Vídeo da oferta"
+            />
           ) : (
-            <div
-              style={{
-                aspectRatio: '16 / 9',
-                border: '1px solid var(--line)',
-                background: 'var(--bg-2)',
-                display: 'grid',
-                placeItems: 'center',
-              }}
-            >
-              <span className="micro">{DOWNSELL.placeholder}</span>
-            </div>
+            <PlayerVazio aspecto={downsellAspecto} texto={DOWNSELL.placeholder} />
           )}
         </div>
 
