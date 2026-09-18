@@ -181,6 +181,27 @@ test('nenhuma resposta antes do lead carrega texto de dossiê', async ({ request
   expect(corpo).not.toContain('fechamento');
 });
 
+test('o downsell existe, está fora do índice e não promete resultado', async ({ page }) => {
+  await page.goto('/estoicismo-nos-mitos');
+
+  const main = page.locator('main');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Espere aqui');
+  await expect(main).toContainText('Estoicismo nos Mitos');
+  await expect(main).toContainText('Esta oferta existe só nesta página.');
+
+  // Página de oferta indexada aparece no Google solta, sem o dossiê antes.
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
+
+  /*
+   * Aqui existe botão de compra, ao contrário do dossiê. O que continua
+   * proibido em qualquer lugar é urgência falsa e promessa de resultado.
+   */
+  const texto = (await page.locator('body').innerText()).toLowerCase();
+  for (const proibida of ['garanta sua vaga', 'não perca', 'últimas vagas', 'de uma vez por todas']) {
+    expect(texto).not.toContain(proibida);
+  }
+});
+
 test('a política de privacidade existe e está fora do índice', async ({ page }) => {
   await page.goto('/privacidade');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Política de privacidade');

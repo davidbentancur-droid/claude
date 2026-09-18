@@ -1,17 +1,28 @@
 import type { NextConfig } from 'next';
 
 /**
- * Host do embed da VSL, pra liberar no frame-src sem abrir o CSP inteiro.
- * Enquanto a env estiver vazia, nenhum host extra entra.
+ * Hosts dos embeds de vídeo, pra liberar no frame-src sem abrir o CSP inteiro.
+ * Enquanto as envs estiverem vazias, nenhum host extra entra.
+ *
+ * São dois vídeos: a VSL no fim do dossiê e o da página de downsell. Podem vir
+ * de plataformas diferentes, então cada um traz o próprio host.
  */
-function hostDaVsl(): string[] {
-  const url = process.env.NEXT_PUBLIC_VSL_EMBED_URL;
-  if (!url) return [];
-  try {
-    return [new URL(url).origin];
-  } catch {
-    return [];
+function hostsDeVideo(): string[] {
+  const urls = [
+    process.env.NEXT_PUBLIC_VSL_EMBED_URL,
+    process.env.NEXT_PUBLIC_DOWNSELL_VSL_EMBED_URL,
+  ];
+
+  const origens = new Set<string>();
+  for (const url of urls) {
+    if (!url) continue;
+    try {
+      origens.add(new URL(url).origin);
+    } catch {
+      // URL malformada não derruba o build, só não entra no CSP.
+    }
   }
+  return [...origens];
 }
 
 const csp = [
@@ -25,7 +36,7 @@ const csp = [
   "media-src 'self' blob:",
   // Wildcard em CSP só vale no rótulo mais à esquerda. `player-vz-*.tv...` faz o
   // navegador descartar a diretiva inteira, o que abriria o frame-src sem aviso.
-  `frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://*.tv.pandavideo.com.br ${hostDaVsl().join(' ')}`.trim(),
+  `frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://*.tv.pandavideo.com.br ${hostsDeVideo().join(' ')}`.trim(),
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

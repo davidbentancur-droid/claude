@@ -51,6 +51,24 @@ export const rastrear = {
   infograficoPronto: () => evento('quiz_infografico_done'),
   vslVisivel: () => evento('vsl_view'),
   vslPlay: () => evento('vsl_play'),
+
+  /**
+   * A bifurcação depois da VSL. Os dois lados são medidos porque a razão entre
+   * eles é o que diz se o downsell está pegando quem a mentoria não pegou.
+   */
+  vslSim: () => {
+    evento('vsl_cta_mentoria');
+    eventoPixel('Contact');
+  },
+  vslNao: () => evento('vsl_cta_downsell'),
+
+  downsell: () => evento('downsell_view'),
+  downsellVideo: () => evento('downsell_video_view'),
+  downsellCheckout: () => {
+    evento('downsell_checkout');
+    eventoPixel('InitiateCheckout');
+  },
+
   risco: () => evento('quiz_risk'),
   piada: () => evento('quiz_joke'),
   erro: (motivo: string) => evento('quiz_error', { motivo }),

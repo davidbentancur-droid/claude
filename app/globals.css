@@ -185,6 +185,57 @@ q.dele {
   border-color: var(--gold);
 }
 
+/*
+ * O botão quente, e o único degradê da casa.
+ *
+ * A regra da marca proíbe gradiente decorativo, e este não é: ele existe pra
+ * separar, sem ler a palavra, o caminho principal do secundário. Abaixo da VSL
+ * são dois botões lado a lado, e o dourado chapado dos dois faria o cara
+ * escolher por leitura em vez de por hierarquia. É degradê de função.
+ *
+ * Em linha reta e dentro da própria faixa do dourado, sem cor de fora.
+ */
+.botao-degrade {
+  background: linear-gradient(100deg, var(--gold) 0%, #e0c680 45%, var(--gold-2) 100%);
+  color: var(--bg);
+  border: 0;
+  text-decoration: none;
+  display: inline-block;
+  transition: filter 140ms linear;
+}
+
+.botao-degrade:hover:not(:disabled) {
+  background: linear-gradient(100deg, var(--gold) 0%, #e0c680 45%, var(--gold-2) 100%);
+  filter: brightness(1.08);
+}
+
+.botao-degrade:disabled {
+  filter: grayscale(0.4) brightness(0.7);
+}
+
+/*
+ * As duas saídas depois da VSL. Empilham no celular, com o preenchido em cima,
+ * porque numa coluna o primeiro é o que ganha o polegar.
+ */
+.saidas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.875rem;
+  margin-top: 1.75rem;
+  align-items: center;
+}
+
+.saidas .botao {
+  text-align: center;
+}
+
+@media (max-width: 560px) {
+  .saidas {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 .campo,
 .area {
   width: 100%;
@@ -288,6 +339,37 @@ q.dele {
   animation: traco 3.4s ease-in-out infinite;
 }
 
+/* ------------------------------------------------------------------ *
+ * Downsell. A entrada do título, palavra por palavra.
+ *
+ * Único movimento da página, e ele tem trabalho: quem chega ali acabou de
+ * clicar em "Não, obrigado" e está de saída. As palavras subindo em sequência
+ * seguram o olho pelo tempo de ler a linha.
+ * ------------------------------------------------------------------ */
+
+@keyframes subir-palavra {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.palavra-entra {
+  display: inline-block;
+  opacity: 0;
+  animation: subir-palavra 460ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.titulo-downsell {
+  font-size: clamp(2.5rem, 1.6rem + 3.6vw, 4rem);
+  color: var(--gold);
+  line-height: 1.05;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -295,6 +377,12 @@ q.dele {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  /* `both` com duração quase zero já resolve, mas o opacity inicial é inline
+     e precisa ser desfeito na mão pra o título não ficar invisível. */
+  .palavra-entra {
+    opacity: 1;
   }
 }
 

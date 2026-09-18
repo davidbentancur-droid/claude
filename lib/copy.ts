@@ -283,6 +283,38 @@ export const FORMULARIO = {
 export const VSL = {
   linha: 'A leitura inteira, em capítulos, começa aqui.',
   placeholder: 'O vídeo entra aqui.',
+  /**
+   * Os dois botões abaixo do vídeo, pedidos pelo David em 18/09.
+   *
+   * O preenchido vai pro WhatsApp do Adriano. O vazado não é um "sair": ele
+   * leva pro downsell, que é a segunda oferta. Por isso ele existe e por isso
+   * não pode parecer um botão de fechar.
+   *
+   * Esta copy não vem do Prompt Mãe, vem da instrução do David, e fica marcada
+   * assim pra quando o Adriano revisar.
+   */
+  botaoSim: 'Quero saber mais sobre a mentoria',
+  botaoNao: 'Não, obrigado',
+} as const;
+
+/**
+ * Downsell. Rascunho a partir da instrução do David em 18/09, pendente de
+ * aprovação do Adriano.
+ *
+ * A regra da casa proíbe botão de compra, escassez e preço no dossiê, e isso
+ * continua valendo lá. Aqui é outra página e outra oferta, pedida explicitamente
+ * como downsell, então a régua é a de uma página de venda. Mesmo assim: sem
+ * contagem regressiva, sem preço na copy, sem promessa de resultado.
+ */
+export const DOWNSELL = {
+  titulo: 'Espere aqui!',
+  linha: 'Esta oferta existe só nesta página.',
+  apoio:
+    'Antes de tu ir, tem uma segunda porta. Mais curta, mais barata, e pela mesma lente: os mitos lidos como manual de conduta.',
+  produto: 'Estoicismo nos Mitos',
+  botao: 'Quero aproveitar a oferta',
+  placeholder: 'O vídeo da oferta entra aqui.',
+  voltar: 'Voltar pro meu dossiê',
 } as const;
 
 export const INFOGRAFICO = {
