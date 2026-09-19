@@ -69,21 +69,66 @@ export const Direcao = enumTolerante(['↑', '↓', 'maduro'] as const, {
   pleno: 'maduro',
 });
 
-export const Tradicao = enumTolerante([
-  'bíblica',
-  'grega',
-  'nórdica',
-  'egípcia',
-  'védica',
-  'mesopotâmica',
-  'conto popular',
-  'matéria da Bretanha',
-] as const);
+export const Popularidade = enumTolerante(['Alto', 'Médio', 'Baixo'] as const, {
+  alta: 'Alto',
+  media: 'Médio',
+  medio: 'Médio',
+  baixa: 'Baixo',
+});
 
+/**
+ * Um eco. Prompt Mãe Passo 5, na versão de 19/09.
+ *
+ * `tradicao` deixou de ser enum fechado e `fonte` sumiu. As duas mudanças têm a
+ * mesma causa: desde 19/09 o mito vem obrigatoriamente do Banco de Mitos, e o
+ * banco já traz a tradição e a referência escritas na linha. Pedir pro modelo
+ * declarar de novo o que a lista já diz é pedir pra ele errar, e enum de
+ * tradição fechado na mão reprovaria metade do banco, que tem folclore japonês,
+ * chinês, eslavo, indígena e africano.
+ *
+ * `historia` e `ligacao` são separados de propósito. O Passo 5 manda "separar
+ * sempre o que está na fonte do que é leitura aplicada à vida dele", e dois
+ * campos garantem isso melhor que um pedido em prosa. `angulo` obriga o modelo
+ * a dizer qual ângulo não-óbvio do banco ele está usando, que é a diferença
+ * entre usar o banco e só pegar um nome dele.
+ */
 export const Eco = z.object({
+  mito: z.string().min(1),
+  popularidade: Popularidade,
+  tradicao: z.string().min(1),
   historia: z.string().min(1),
-  fonte: z.string().min(1),
-  tradicao: Tradicao,
+  angulo: z.string().default(''),
+  ligacao: z.string().default(''),
+});
+
+/**
+ * As quatro relações do Passo 3.5, mais a saída pra quando a P1 não rende
+ * Movimento identificável, que é o único caso em que o passo não roda.
+ *
+ * O rótulo é interno. O Passo 3.5 proíbe ele de aparecer no dossiê, e o
+ * validador confere isso.
+ */
+export const RelacaoDeArco = enumTolerante(
+  ['repetição', 'consequência', 'contraste', 'progressão de Ato', 'ausente'] as const,
+  {
+    repeticao: 'repetição',
+    consequencia: 'consequência',
+    'progressao de ato': 'progressão de Ato',
+    progressao: 'progressão de Ato',
+    'progressao de ato ': 'progressão de Ato',
+    nenhuma: 'ausente',
+    nenhum: 'ausente',
+    'nao identificavel': 'ausente',
+    'nao se aplica': 'ausente',
+  },
+);
+
+export const Arco = z.object({
+  /** O Movimento que a P1 rende. Vazio quando não rende nenhum. */
+  movimento_sete_anos: z.string().default(''),
+  relacao: RelacaoDeArco,
+  /** A leitura resultante, em uma frase ancorada nas cenas dele. */
+  frase: z.string().default(''),
 });
 
 export const Arquetipo = z.object({
@@ -142,6 +187,7 @@ export const AnaliseSchema = z.object({
     recorrencia_detectada: z.coerce.boolean().default(false),
     descartados: z.array(z.string()).default([]),
   }),
+  arco: Arco,
   arquetipos: z.array(Arquetipo).min(1).max(2),
   fortalecer_primeiro: NomeArquetipo,
   ecos: z.array(Eco).length(2),

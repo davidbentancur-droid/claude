@@ -44,9 +44,24 @@ export async function GET(req: Request) {
     promptMae = 'ausente';
   }
 
+  /*
+   * O banco de mitos é o segundo documento de contexto desde 19/09, e falta
+   * dele é falha silenciosa do pior tipo: o engine continua respondendo, só que
+   * escolhendo mito de memória. Conta os mitos em vez de medir o arquivo,
+   * porque o que quebra na Vercel é o parse, não o tamanho.
+   */
+  let banco = 0;
+  try {
+    const { bancoDeMitos } = await import('@/lib/mitos');
+    banco = bancoDeMitos().length;
+  } catch {
+    banco = 0;
+  }
+
   const base = {
     ok: true,
     prompt_mae: promptMae,
+    banco_de_mitos: banco,
     engine_provider: process.env.ENGINE_PROVIDER ?? 'anthropic',
     anthropic: Boolean(process.env.ANTHROPIC_API_KEY),
     anthropic_model: process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-5',

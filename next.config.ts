@@ -50,10 +50,17 @@ const nextConfig: NextConfig = {
    * O Prompt Mãe é lido de `docs/prompt-mae.md` em runtime. Sem esta entrada o
    * arquivo não sobe junto com a função e o engine quebra só em produção.
    */
+  /*
+   * Os dois documentos de contexto viajam junto com as funções que os leem.
+   * O banco de mitos entrou em 19/09 e é tão obrigatório quanto o Prompt Mãe:
+   * sem ele o engine volta a escolher mito de memória, sem aviso nenhum.
+   */
   outputFileTracingIncludes: {
-    '/api/read': ['./docs/prompt-mae.md'],
+    '/api/read': ['./docs/prompt-mae.md', './docs/banco-de-mitos.md'],
+    '/api/dossie': ['./docs/prompt-mae.md', './docs/banco-de-mitos.md'],
+    '/api/lead': ['./docs/prompt-mae.md', './docs/banco-de-mitos.md'],
     '/api/check-answer': ['./docs/prompt-mae.md'],
-    '/api/health': ['./docs/prompt-mae.md'],
+    '/api/health': ['./docs/prompt-mae.md', './docs/banco-de-mitos.md'],
   },
 
   async headers() {

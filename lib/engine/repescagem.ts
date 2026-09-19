@@ -18,6 +18,28 @@ const MARCA_DE_TEMPO =
   /\b(?:19|20)\d{2}\b|\b\d{1,2}\s+anos\b|\baos\s+\d{1,2}\b|\b(?:janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\b/i;
 
 /**
+ * Todas as marcas de tempo de um texto, sem repetir.
+ *
+ * O validador usa isto pra conferir a leitura de arco: o Passo 3.5 manda
+ * ancorar a relação nas cenas que ele deu, e uma data da Pergunta 1 dentro do
+ * bloco do Movimento é exatamente essa âncora. Mora aqui, e não no validador,
+ * porque o padrão é o mesmo do portão de repescagem e duas cópias divergiriam.
+ */
+export function marcasDeTempo(texto: string): string[] {
+  const re = new RegExp(MARCA_DE_TEMPO.source, 'gi');
+  const achadas = texto.match(re) ?? [];
+  const vistas = new Set<string>();
+  const fora: string[] = [];
+  for (const m of achadas) {
+    const k = m.toLowerCase().trim();
+    if (vistas.has(k)) continue;
+    vistas.add(k);
+    fora.push(m.trim());
+  }
+  return fora;
+}
+
+/**
  * Nome próprio que não abre frase: "em Pelotas", "meu sócio Rafa".
  *
  * Um só teste cobre lugar e pessoa, e cobre os dois do jeito que o Prompt Mãe

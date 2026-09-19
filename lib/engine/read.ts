@@ -87,7 +87,21 @@ const ESFORCO_RETRY: Esforco = 'low';
  */
 const PENSAR = (process.env.ENGINE_THINKING ?? 'adaptive') !== 'disabled';
 
-const MAX_TENTATIVAS = 3; // 1 mais 2 retries
+/**
+ * Quantas tentativas cada metade tem, e por que são números diferentes.
+ *
+ * A chamada 1 é a latência que o cara sente na tela, uns 30 s. Cada retry ali
+ * custa o tempo dele, então três é o teto.
+ *
+ * A chamada 2 roda enquanto ele preenche os quatro campos do formulário, quer
+ * dizer, num tempo que ele já ia gastar de qualquer jeito. Ali retry é de
+ * graça, e o conserto de tamanho é justamente o que precisa de mais de uma
+ * passada: medido, as tentativas 1 e 2 cortam pouco e a 3 e a 4 é que fazem o
+ * dossiê caber. Quatro tentativas dão uns 30 s, dentro dos 40 s que
+ * `/api/lead` espera e longe do teto de 60 s da função.
+ */
+const MAX_TENTATIVAS_ANALISE = 3; // 1 mais 2 retries
+const MAX_TENTATIVAS_DOSSIE = 4; // 1 mais 3 retries, de graça
 
 /**
  * Orçamento de tempo do conjunto de tentativas.
@@ -194,6 +208,7 @@ type Passo<T> = {
   validar: (valor: T) => Resultado;
   esforco: Esforco;
   orcamentoMs: number;
+  maxTentativas: number;
   /**
    * Gancho da chamada 1. Roda antes do parse estrito e permite sair do laço
    * quando o modelo sinaliza risco ou piada, que é quando o Prompt Mãe manda
@@ -224,7 +239,7 @@ async function rodar<T>(passo: Passo<T>): Promise<Saida<T>> {
   let tentativas = 0;
   let duracaoMedia = 0;
 
-  for (let i = 0; i < MAX_TENTATIVAS; i++) {
+  for (let i = 0; i < passo.maxTentativas; i++) {
     const decorrido = Date.now() - comeco;
 
     // Da segunda tentativa em diante, só segue se couber no orçamento. O retry
@@ -267,7 +282,7 @@ async function rodar<T>(passo: Passo<T>): Promise<Saida<T>> {
     const parsed = passo.parse(cru);
 
     if (!parsed.ok) {
-      if (i === MAX_TENTATIVAS - 1) {
+      if (i === passo.maxTentativas - 1) {
         throw new Error(`O JSON não bateu com o contrato: ${parsed.erros.join('; ')}`);
       }
       mensagens.push({ role: 'assistant', content: bruto });
@@ -293,7 +308,7 @@ async function rodar<T>(passo: Passo<T>): Promise<Saida<T>> {
       };
     }
 
-    if (i < MAX_TENTATIVAS - 1) {
+    if (i < passo.maxTentativas - 1) {
       mensagens.push({ role: 'assistant', content: bruto });
       mensagens.push({
         role: 'user',
@@ -345,6 +360,7 @@ export async function gerarAnalise(respostas: Respostas): Promise<ResultadoAnali
     primeiraMensagem: montarRespostas(respostas) + instrucaoGancho(),
     esforco: ESFORCO,
     orcamentoMs: ORCAMENTO_MS,
+    maxTentativas: MAX_TENTATIVAS_ANALISE,
 
     // Risco e piada saem antes do parse estrito: o Prompt Mãe manda parar o
     // fluxo, então cobrar spoiler de 90 palavras aqui é cobrar texto que vai
@@ -423,6 +439,7 @@ export async function escreverDossie(
     primeiraMensagem: montarAnaliseParaEscrita(respostas, analise),
     esforco: ESFORCO_DOSSIE,
     orcamentoMs: ORCAMENTO_DOSSIE_MS,
+    maxTentativas: MAX_TENTATIVAS_DOSSIE,
 
     parse: (cru) => {
       const p = SaidaDossieSchema.safeParse(cru);
