@@ -87,7 +87,31 @@ Opcionais, e nada quebra sem elas:
 5. Deploy de Preview. Abrir `/api/health` e conferir que devolve `prompt_mae: "ok"`, `anthropic: true`, `supabase: true`.
 6. Fazer o fluxo inteiro uma vez com a fixture do Marcelo. No Supabase, conferir que a sessão, as quatro respostas, a leitura e o lead foram gravados, e que a view `leads_para_contato` devolve a linha com a dor literal da P4.
 7. Só então promover pra Production.
-8. Domínio quando for definido. A sugestão do planejamento é `leitura.adrianorahde.com.br`.
+8. Domínio. Feito em 18/09: `mitobiografia.adrianorahde.com.br`.
+
+## O domínio
+
+Produção atende em dois endereços, os dois válidos:
+
+- `mitobiografia.adrianorahde.com.br`, o de verdade
+- `mini-dossie-mitico.vercel.app`, que a Vercel mantém e serve de rota de fuga se o DNS quebrar
+
+O domínio `adrianorahde.com.br` é registrado no Hostinger e a zona DNS mora lá
+(`ns1.dns-parking.com`, `ns2.dns-parking.com`). Dois registros sustentam isso:
+
+| tipo | nome | valor | TTL |
+| --- | --- | --- | --- |
+| TXT | `_vercel` | `vc-domain-verify=mitobiografia.adrianorahde.com.br,bedaff84e56720fed982` | 14400 |
+| CNAME | `mitobiografia` | `6a3609bf965e1282.vercel-dns-017.com` | 300 |
+
+O TXT é a prova de posse e fica: apagar ele derruba a verificação na próxima
+renovação. O CNAME é o apontamento.
+
+O subdomínio já existia e tinha um `ALIAS mitobiografia → mitobiografia.adrianorahde.com.br.cdn.hstgr.net`,
+que servia a "Default page" do Hostinger. Ele foi apagado, e tinha que ser:
+o Hostinger recusa CNAME e ALIAS no mesmo nome, com
+`RRset ... IN ALIAS must not be used with CNAME on the same name`. Se um dia
+o subdomínio precisar voltar pro Hostinger, é esse valor que se recria.
 
 ## Headers
 

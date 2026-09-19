@@ -11,7 +11,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const BASE = process.argv[2] ?? 'https://mini-dossie-mitico.vercel.app';
+const BASE = process.argv[2] ?? 'https://mitobiografia.adrianorahde.com.br';
 
 const fixture = JSON.parse(
   readFileSync(join(process.cwd(), 'tests', 'fixtures', 'marcelo.json'), 'utf8'),
