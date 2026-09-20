@@ -10,7 +10,8 @@
     "engine:fixture": "tsx scripts/engine-fixture.ts",
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
-    "smoke": "tsx scripts/smoke-producao.ts"
+    "smoke": "tsx scripts/smoke-producao.ts",
+    "custo": "tsx scripts/custo.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.125.0",

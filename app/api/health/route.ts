@@ -68,6 +68,14 @@ export async function GET(req: Request) {
     openai: Boolean(process.env.OPENAI_API_KEY),
     openai_engine_model: process.env.OPENAI_ENGINE_MODEL ?? 'gpt-5',
     engine_effort: process.env.ENGINE_EFFORT ?? 'medium',
+    /*
+     * O esforço da chamada 2 aparece aqui porque é ele que manda na conta.
+     * Medido em 19/09: a chamada 2 em `medium` queima uns 7.200 tokens de
+     * raciocínio pra escrever umas 820 de dossiê, e saída é 93% do custo por
+     * lead. Sem este campo o número fica invisível, porque a env var está
+     * marcada como sensível na Vercel e não se lê de volta.
+     */
+    engine_effort_dossie: process.env.ENGINE_EFFORT_DOSSIE ?? 'medium',
     supabase: temSupabase(),
     rate_limit: temRateLimit(),
     vsl: temVsl,
