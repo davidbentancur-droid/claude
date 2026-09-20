@@ -9,6 +9,19 @@ import { supabase } from '../supabase';
  * coisa a quebrar quando o volume subisse.
  */
 
+/** As abas do painel. A URL manda, pra o link ser copiável. */
+export const ABAS = [
+  { chave: 'dados', rotulo: 'Dados' },
+  { chave: 'leads', rotulo: 'Leads' },
+  { chave: 'respostas', rotulo: 'Respostas' },
+] as const;
+
+export type Aba = (typeof ABAS)[number]['chave'];
+
+export function abaValida(v: string | undefined): Aba {
+  return ABAS.some((a) => a.chave === v) ? (v as Aba) : 'dados';
+}
+
 /** Janela em dias. Zero é "desde o começo". */
 export const JANELAS = [
   { dias: 1, rotulo: 'Hoje' },
@@ -112,6 +125,8 @@ export type Resposta = {
 export type Painel = {
   dias: number;
   desde: string | null;
+  /** Quantas sessões têm resposta, mesmo quando o texto não foi buscado. */
+  sessoesComResposta: number;
   etapas: Etapa[];
   bifurcacao: {
     whatsapp: number;
@@ -187,7 +202,19 @@ function contar<T extends string>(valores: (T | null)[]): { chave: T; n: number 
 /** Teto por consulta. Acima disso o painel mostraria mais do que se lê. */
 const TETO = 2000;
 
-export async function carregarPainel(dias: number): Promise<Painel> {
+/**
+ * `comRespostas` existe por custo, não por organização.
+ *
+ * A consulta das respostas é a cara: ela busca em lotes de 500 e traz o texto
+ * inteiro de cada pergunta. Na aba Dados esse texto não aparece em lugar
+ * nenhum, então buscar ele seria trazer alguns megabytes pra jogar fora. As
+ * contagens do funil não dependem dele: saem de `respostas_dadas`, que a view
+ * já devolve pronto.
+ */
+export async function carregarPainel(
+  dias: number,
+  { comRespostas = true }: { comRespostas?: boolean } = {},
+): Promise<Painel> {
   const db = supabase();
   const corte = corteDe(dias);
 
@@ -329,7 +356,7 @@ export async function carregarPainel(dias: number): Promise<Painel> {
   };
 
   let linhas: LinhaResposta[] = [];
-  if (ids.length > 0) {
+  if (comRespostas && ids.length > 0) {
     /*
      * Em lotes porque `in` com lista gigante estoura o tamanho da URL do
      * PostgREST. Quinhentos ids cabem com folga e o painel raramente passa de
@@ -353,7 +380,7 @@ export async function carregarPainel(dias: number): Promise<Painel> {
     porSessao.set(l.session_id, atual);
   }
 
-  const respostas: Resposta[] = comResposta.map((s) => {
+  const respostas: Resposta[] = (comRespostas ? comResposta : []).map((s) => {
     const rs = porSessao.get(s.session_id) ?? [];
     const achar = (p: number) => rs.find((r) => r.pergunta === p) ?? null;
     const a1 = achar(1);
@@ -384,6 +411,7 @@ export async function carregarPainel(dias: number): Promise<Painel> {
   return {
     dias,
     desde: corte,
+    sessoesComResposta: comResposta.length,
     etapas,
     bifurcacao: {
       whatsapp: n.whatsapp,

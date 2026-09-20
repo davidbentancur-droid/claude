@@ -1,18 +1,24 @@
 import type { Etapa } from '@/lib/painel/dados';
 
 /**
- * O funil em trapézio, na forma da referência que o David mandou.
+ * O funil.
  *
  * A largura da barra sai da raiz quadrada da razão com a etapa do topo, não da
  * razão crua. Motivo: a razão crua colapsa. Numa passagem de 49 mil impressões
  * pra 600 cliques a barra de baixo teria um por cento da largura da de cima e
  * sumiria, e é justamente nas etapas de baixo que se olha. A raiz preserva a
  * ordem, quer dizer, barra menor continua significando número menor, e ainda
- * deixa a etapa final visível. O número exato está escrito dentro da barra de
+ * deixa a etapa final visível. O número exato está escrito na barra de
  * qualquer jeito, que é de onde se lê o dado.
+ *
+ * Encolheu em 20/09, a pedido do David. O que mudou: barra de 72 pra 40 px,
+ * queda virou um número solto no vão em vez de uma etiqueta com moldura, e a
+ * métrica da direita passou a ser uma linha só. O funil inteiro cabe na tela
+ * agora, e era esse o ponto: funil que precisa de rolagem deixa de ser funil e
+ * vira lista.
  */
 
-const PISO = 0.22;
+const PISO = 0.26;
 
 function largura(n: number, maior: number): number {
   if (maior <= 0) return PISO;
@@ -22,11 +28,8 @@ function largura(n: number, maior: number): number {
 /** Do ouro claro pro escuro, pra etapa de baixo não competir com a de cima. */
 function faixa(i: number, total: number): { a: string; b: string } {
   const t = total <= 1 ? 0 : i / (total - 1);
-  const claro = 78 - t * 26;
-  return {
-    a: `hsl(41 45% ${claro}%)`,
-    b: `hsl(41 42% ${claro - 9}%)`,
-  };
+  const claro = 74 - t * 30;
+  return { a: `hsl(41 48% ${claro}%)`, b: `hsl(41 44% ${claro - 7}%)` };
 }
 
 function numero(n: number): string {
@@ -44,23 +47,18 @@ export function Funil({ etapas }: { etapas: Etapa[] }) {
         const cor = faixa(i, etapas.length);
 
         return (
-          <div key={e.chave}>
-            {i > 0 && (
-              <div className="funil__queda">
-                <span className="queda">
-                  ↓ {e.drop === null ? '' : e.drop.toFixed(1)}% de queda
+          <div className="funil__linha" key={e.chave}>
+            <div className="funil__rotulo">
+              <span className="funil__nome">{e.rotulo}</span>
+              {e.desdeAgora && <span className="funil__novo">novo</span>}
+            </div>
+
+            <div className="funil__meio">
+              {i > 0 && (
+                <span className="funil__queda">
+                  {e.drop === null ? '' : `${e.drop.toFixed(0)}%`}
                 </span>
-              </div>
-            )}
-
-            <div className="funil__etapa">
-              <div className="funil__rotulo">
-                <p className="funil__nome">{e.rotulo}</p>
-                {e.conv !== null && (
-                  <p className="funil__conv">conv. {e.conv.toFixed(2)}%</p>
-                )}
-              </div>
-
+              )}
               <div
                 className="funil__barra"
                 style={
@@ -74,14 +72,13 @@ export function Funil({ etapas }: { etapas: Etapa[] }) {
               >
                 <span className="funil__n">{numero(e.n)}</span>
               </div>
+            </div>
 
-              <div className="funil__metrica">
-                {e.nota}
-                <b>
-                  {e.conv === null ? 'topo do funil' : `${e.conv.toFixed(1)}% da etapa acima`}
-                </b>
-                {e.desdeAgora && <span>medido desde 20/09</span>}
-              </div>
+            <div className="funil__metrica">
+              <span className="funil__conv">
+                {e.conv === null ? '100%' : `${e.conv.toFixed(1)}%`}
+              </span>
+              <span className="funil__nota">{e.nota}</span>
             </div>
           </div>
         );

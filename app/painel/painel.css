@@ -282,7 +282,7 @@
 }
 
 .placa__titulo {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   color: var(--ink);
   margin: 0 0 1.35rem;
   padding-bottom: 0.7rem;
@@ -327,34 +327,130 @@
   margin: 0.4rem 0 0;
 }
 
+/* --- abas --- */
+
+.abas {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--painel-linha);
+}
+
+.aba {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  color: var(--ink-2);
+  text-decoration: none;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  /*
+   * A borda existe sempre, transparente quando a aba está fria. Aparecer só na
+   * ativa empurraria as outras um pixel pra baixo a cada troca.
+   */
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.aba:hover {
+  color: var(--ink);
+}
+
+.aba--ativa {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+}
+
+.aba__n {
+  font-size: 0.68rem;
+  color: var(--ink-2);
+  background: rgba(201, 168, 92, 0.08);
+  border: 1px solid var(--painel-linha);
+  padding: 0.05rem 0.4rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.aba--ativa .aba__n {
+  color: var(--gold);
+  border-color: var(--painel-linha-forte);
+}
+
+/* --- duas colunas --- */
+
+.duas {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.coluna-lado {
+  display: flex;
+  flex-direction: column;
+}
+
+.coluna-lado .placa:last-child {
+  margin-bottom: 0;
+}
+
 /* --- funil --- */
 
 .funil {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
-.funil__etapa {
+.funil__linha {
   display: grid;
-  grid-template-columns: minmax(130px, 200px) 1fr minmax(120px, 190px);
+  grid-template-columns: minmax(96px, 150px) minmax(0, 1fr) minmax(74px, 108px);
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .funil__rotulo {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 0.35rem;
   text-align: right;
 }
 
 .funil__nome {
-  font-size: 0.84rem;
-  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.25;
+  color: var(--ink);
 }
 
-.funil__conv {
-  font-size: 0.7rem;
-  color: var(--ink-2);
-  margin: 0.15rem 0 0;
+.funil__novo {
+  font-size: 0.54rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold-2);
+  border: 1px solid var(--painel-linha);
+  padding: 0 0.25rem;
+  white-space: nowrap;
+}
+
+/* A queda flutua no vão entre duas barras, sem moldura e sem ocupar linha. */
+.funil__meio {
+  position: relative;
+}
+
+.funil__queda {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  font-size: 0.6rem;
+  color: var(--painel-queda);
+  background: var(--painel-placa);
+  padding: 0 0.3rem;
   font-variant-numeric: tabular-nums;
+  pointer-events: none;
 }
 
 /*
@@ -363,8 +459,7 @@
  * desenho não lê como funil, lê como pilha de caixas.
  */
 .funil__barra {
-  position: relative;
-  height: 72px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -378,54 +473,33 @@
 }
 
 .funil__n {
-  font-size: 1.3rem;
+  font-size: 1rem;
   color: #14100b;
   font-variant-numeric: tabular-nums;
 }
 
 .funil__metrica {
-  font-size: 0.68rem;
-  color: var(--ink-2);
-  line-height: 1.55;
-}
-
-.funil__metrica b {
-  display: block;
-  color: var(--gold);
-  font-size: 0.78rem;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-}
-
-.funil__queda {
   display: flex;
-  justify-content: center;
-  padding: 0.3rem 0;
+  flex-direction: column;
+  line-height: 1.3;
 }
 
-.queda {
-  font-size: 0.68rem;
-  color: var(--painel-queda);
-  border: 1px solid rgba(192, 98, 94, 0.28);
-  background: rgba(192, 98, 94, 0.07);
-  padding: 0.15rem 0.6rem;
+.funil__conv {
+  font-size: 0.82rem;
+  color: var(--gold);
   font-variant-numeric: tabular-nums;
 }
 
-.aviso {
-  font-size: 0.72rem;
-  line-height: 1.6;
+.funil__nota {
+  font-size: 0.62rem;
   color: var(--ink-2);
-  border-left: 2px solid var(--gold-2);
-  padding: 0.5rem 0 0.5rem 0.8rem;
-  margin: 1.25rem 0 0;
 }
 
 /* --- bifurcação --- */
 
 .bifurcacao {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
   gap: 1px;
   background: var(--painel-linha);
   border: 1px solid var(--painel-linha);
@@ -433,7 +507,7 @@
 
 .ramo {
   background: var(--painel-placa);
-  padding: 1.1rem;
+  padding: 0.9rem;
 }
 
 .ramo__nome {
@@ -443,7 +517,7 @@
 }
 
 .ramo__n {
-  font-size: 1.9rem;
+  font-size: 1.55rem;
   line-height: 1;
   color: var(--gold);
   margin: 0;
@@ -460,8 +534,8 @@
 
 .recortes {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
 }
 
 .barra-linha {
@@ -728,27 +802,28 @@
     align-items: flex-start;
   }
 
-  .funil__etapa {
+  .duas {
     grid-template-columns: 1fr;
-    gap: 0.35rem;
-    margin-bottom: 0.5rem;
   }
 
-  .funil__rotulo {
-    text-align: left;
-  }
-
-  .funil__barra {
-    height: 56px;
-  }
-
-  .funil__metrica {
-    display: flex;
+  .funil__linha {
+    grid-template-columns: minmax(84px, 1.1fr) minmax(0, 1.6fr) 56px;
     gap: 0.5rem;
-    align-items: baseline;
   }
 
-  .funil__metrica b {
-    display: inline;
+  .funil__nome {
+    font-size: 0.7rem;
+  }
+
+  .funil__novo {
+    display: none;
+  }
+
+  .funil__nota {
+    display: none;
+  }
+
+  .abas {
+    overflow-x: auto;
   }
 }
