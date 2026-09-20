@@ -42,6 +42,18 @@ A regra de honestidade do Prompt Mãe Seção 4.1 continua valendo: a chamada 2 
 
 Concorrência: a função `claim_dossie` (migração 0002) é a trava. Dois caminhos podem disparar a escrita, e sem ela os dois gerariam o mesmo texto em paralelo.
 
+## O painel
+
+`/painel` é ferramenta interna, pedida pelo David em 20/09. Funil visual da página até a VSL, a bifurcação WhatsApp contra downsell, os leads com botão de WhatsApp e todas as respostas com busca. Filtro por janela de dias no topo.
+
+Três coisas que valem saber antes de mexer nele:
+
+1. **Ele tem senha, e falha fechado.** `middleware.ts` faz Basic Auth com `PAINEL_SENHA`. Sem a variável, ou com menos de 8 caracteres, a rota devolve 503 e não mostra nada. A página lista WhatsApp, profissão, orçamento e as respostas inteiras de gente que preencheu um formulário; isso não fica aberto por descuido de configuração.
+2. **O funil de cima é retroativo, o de baixo não.** Da abertura da página até o lead salvo cada etapa já deixava linha própria em `quiz_sessions`, `quiz_answers`, `quiz_readings` e `quiz_leads`, então vale desde o primeiro dia. Abrir o dossiê, chegar na VSL, ir pro WhatsApp, descer pro downsell e ir pro checkout só passaram a ser gravados na migração 0004, porque antes disso o `lib/tracking.ts` mandava pro GTM e pro Pixel e nada voltava. O painel avisa a data de corte na tela em vez de mostrar zero sem explicação.
+3. **O estilo não segue a régua da casa, de propósito.** Gradiente e trapézio são proibidos no quiz e usados aqui, porque a régua existe pra peça que o cliente vê e esta é interna, desenhada em cima da referência de dashboard que o David mandou.
+
+A qualificação sai de `orcamento_faixa`, que o `classificarOrcamento` já gravava: centenas e milhares contam como qualificado, dezenas não, e `indefinido` vira "ler o texto" em vez de virar veredito. O Prompt Mãe Seção 4.2 avisa que "o verbo importa mais que a cifra", então o campo cru aparece inteiro no card.
+
 ## Desvios deliberados do planejamento
 
 Registrados aqui porque o planejamento diz outra coisa e a divergência é intencional:

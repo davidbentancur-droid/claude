@@ -1,5 +1,6 @@
 'use client';
 
+import { enviarEvento } from './eventos';
 import { temPixel } from './public-env';
 
 /**
@@ -33,6 +34,14 @@ export function eventoPixel(nome: string, props: Props = {}): void {
   window.fbq('track', nome, props);
 }
 
+/**
+ * Os eventos que também vão pro nosso banco.
+ *
+ * GTM e Pixel contam quantos; o banco conta quem, amarrado na sessão. Só as
+ * etapas do funil abaixo do dossiê entram, porque as de cima já deixam linha
+ * própria em quiz_sessions, quiz_answers, quiz_readings e quiz_leads. Duplicar
+ * elas aqui só criaria duas contagens da mesma coisa pra divergirem depois.
+ */
 export const rastrear = {
   inicio: () => evento('quiz_start'),
   perguntaEnviada: (n: number, via: 'texto' | 'audio') =>
@@ -47,10 +56,19 @@ export const rastrear = {
     evento('quiz_lead');
     eventoPixel('Lead');
   },
-  dossie: () => evento('quiz_dossie_view'),
+  dossie: () => {
+    evento('quiz_dossie_view');
+    enviarEvento('dossie_visto');
+  },
   infograficoPronto: () => evento('quiz_infografico_done'),
-  vslVisivel: () => evento('vsl_view'),
-  vslPlay: () => evento('vsl_play'),
+  vslVisivel: () => {
+    evento('vsl_view');
+    enviarEvento('vsl_visivel');
+  },
+  vslPlay: () => {
+    evento('vsl_play');
+    enviarEvento('vsl_play');
+  },
 
   /**
    * A bifurcação depois da VSL. Os dois lados são medidos porque a razão entre
@@ -59,14 +77,22 @@ export const rastrear = {
   vslSim: () => {
     evento('vsl_cta_mentoria');
     eventoPixel('Contact');
+    enviarEvento('whatsapp');
   },
   vslNao: () => evento('vsl_cta_downsell'),
 
-  downsell: () => evento('downsell_view'),
-  downsellVideo: () => evento('downsell_video_view'),
+  downsell: () => {
+    evento('downsell_view');
+    enviarEvento('downsell_visto');
+  },
+  downsellVideo: () => {
+    evento('downsell_video_view');
+    enviarEvento('downsell_video');
+  },
   downsellCheckout: () => {
     evento('downsell_checkout');
     eventoPixel('InitiateCheckout');
+    enviarEvento('downsell_checkout');
   },
 
   risco: () => evento('quiz_risk'),
