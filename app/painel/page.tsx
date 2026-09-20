@@ -79,8 +79,7 @@ export default async function PaginaPainel({
 
   const janela = JANELAS.find((j) => j.dias === dias)?.rotulo ?? '30 dias';
 
-  const contagem: Record<Aba, number> = {
-    dados: p.etapas.length,
+  const contagem: Partial<Record<Aba, number>> = {
     leads: p.leads.length,
     respostas: p.sessoesComResposta,
   };
@@ -127,7 +126,9 @@ export default async function PaginaPainel({
             prefetch={false}
           >
             {a.rotulo}
-            <span className="aba__n">{n(contagem[a.chave])}</span>
+            {contagem[a.chave] !== undefined && (
+              <span className="aba__n">{n(contagem[a.chave] as number)}</span>
+            )}
           </Link>
         ))}
       </nav>
