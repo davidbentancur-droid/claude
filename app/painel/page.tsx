@@ -4,6 +4,7 @@ import { JANELAS, carregarPainel, janelaValida } from '@/lib/painel/dados';
 
 import { Funil } from './Funil';
 import { Leads, Respostas } from './Listas';
+import { Sair } from './Sair';
 
 /**
  * Tela 0 do nosso lado. Não é do funil, é sobre o funil.
@@ -38,13 +39,26 @@ export default async function PaginaPainel({
   try {
     p = await carregarPainel(dias);
   } catch (e) {
+    const msg = e instanceof Error ? e.message : 'erro desconhecido';
+
+    /*
+     * Duas causas prováveis e bem diferentes, então a tela nomeia a certa em
+     * vez de chutar as duas. Chutar manda quem lê procurar no lugar errado.
+     */
+    const pista = /variável de ambiente|SUPABASE_/i.test(msg)
+      ? 'Falta env var no ambiente. Em produção elas ficam em Settings, Environment Variables, na Vercel.'
+      : /funil_por_sessao|does not exist|relation/i.test(msg)
+        ? 'A view funil_por_sessao não existe, quer dizer, a migração 0004 ainda não subiu neste banco.'
+        : 'Não é falta de configuração nem de migração, é o banco recusando a consulta.';
+
     return (
-      <main>
-        <h1 className="painel__titulo">Painel</h1>
+      <main className="painel">
+        <p className="painel__marca">Mitobiografia</p>
+        <h1 className="painel__titulo">O painel</h1>
         <p className="aviso">
-          Não consegui ler o banco: {e instanceof Error ? e.message : 'erro desconhecido'}.
-          Se a migração 0004 ainda não subiu, a view <code>funil_por_sessao</code> não
-          existe e é isso que está faltando.
+          Não consegui ler o banco: {msg}
+          <br />
+          {pista}
         </p>
       </main>
     );
@@ -53,27 +67,31 @@ export default async function PaginaPainel({
   const janela = JANELAS.find((j) => j.dias === dias)?.rotulo ?? '30 dias';
 
   return (
-    <main>
+    <main className="painel">
       <header className="painel__topo">
         <div>
-          <h1 className="painel__titulo">Mini Dossiê Mítico</h1>
+          <p className="painel__marca">Mitobiografia</p>
+          <h1 className="painel__titulo">O painel</h1>
           <p className="painel__sub">
             {janela} · {n(p.resumo.sessoes)} sessões · atualizado agora
           </p>
         </div>
 
-        <nav className="janelas">
-          {JANELAS.map((j) => (
-            <Link
-              key={j.dias}
-              href={`/painel?dias=${j.dias}`}
-              className={`janela${j.dias === dias ? ' janela--ativa' : ''}`}
-              prefetch={false}
-            >
-              {j.rotulo}
-            </Link>
-          ))}
-        </nav>
+        <div className="painel__direita">
+          <Sair />
+          <nav className="janelas">
+            {JANELAS.map((j) => (
+              <Link
+                key={j.dias}
+                href={`/painel?dias=${j.dias}`}
+                className={`janela${j.dias === dias ? ' janela--ativa' : ''}`}
+                prefetch={false}
+              >
+                {j.rotulo}
+              </Link>
+            ))}
+          </nav>
+        </div>
       </header>
 
       <section className="ladrilhos">
