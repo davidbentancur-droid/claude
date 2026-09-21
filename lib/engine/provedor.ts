@@ -57,10 +57,30 @@ export interface Provedor {
 /**
  * Pra onde a chamada vai quando o modelo principal recusa.
  *
- * Opus 5 e não outro Fable: o fallback existe justamente pra sair do
- * classificador que recusou, então repetir a mesma família não ajuda.
+ * Um modelo não pode ser reserva de si mesmo: a API devolve 400 dizendo isso
+ * com todas as letras. Então o default desce um degrau quando o principal já é
+ * o Opus, e a função devolve `null` se o override cair no mesmo modelo, caso em
+ * que a chamada sai sem `fallbacks` em vez de sair quebrada.
  */
-const RESERVA = process.env.ANTHROPIC_MODELO_RESERVA ?? 'claude-opus-5';
+function reservaPara(modelo: string): string | null {
+  const manual = process.env.ANTHROPIC_MODELO_RESERVA;
+  if (manual) return manual === modelo ? null : manual;
+
+  /*
+   * Só a família Fable ganha reserva por default, e com um alvo só.
+   *
+   * O par principal/reserva não é livre: a API tem uma lista fechada de
+   * `allowed_fallback_models` por modelo, devolve 400 quando o par não está
+   * nela, e não expõe a lista no GET do modelo. Testado: nem `claude-opus-5`
+   * nem `claude-sonnet-5` valem como reserva do `claude-opus-5`.
+   *
+   * Então fica o único par que a documentação confirma, Fable caindo pro Opus
+   * 4.8, e o resto sai sem `fallbacks`. Chutar aqui não degrada em silêncio:
+   * derruba toda leitura com 400.
+   */
+  if (!/fable|mythos/i.test(modelo)) return null;
+  return 'claude-opus-4-8';
+}
 
 class ProvedorAnthropic implements Provedor {
   readonly nome = 'anthropic';
@@ -113,14 +133,20 @@ class ProvedorAnthropic implements Provedor {
      * porta e não muda: quem escreve ideação suicida para o fluxo antes de
      * chegar aqui e recebe o CVV, não um dossiê.
      */
+    const reserva = reservaPara(this.modelo);
+
     const msg = await this.sdk()
       .beta.messages.stream({
         model: this.modelo,
         max_tokens: c.maxTokens,
         output_config: { effort: esforco },
         ...(thinking ? { thinking } : {}),
-        betas: ['server-side-fallback-2026-06-01'],
-        fallbacks: [{ model: RESERVA }],
+        ...(reserva
+          ? {
+              betas: ['server-side-fallback-2026-06-01' as const],
+              fallbacks: [{ model: reserva }],
+            }
+          : {}),
         system: [{ type: 'text', text: c.system, cache_control: { type: 'ephemeral' } }],
         messages: c.mensagens,
       })
