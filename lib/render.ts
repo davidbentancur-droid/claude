@@ -1,5 +1,5 @@
 import { partirCitacoes, type Pedaco } from './citacoes';
-import { movimentoPorNumero, type Ato } from './movimentos';
+import { caminhoDoCard, movimentoPorNumero, type Ato } from './movimentos';
 import type { Analise, Leitura } from './engine/schema';
 
 export { partirCitacoes };
@@ -31,6 +31,8 @@ export type DossiePublico = {
       slug: string;
       frase_card: string | null;
       tem_card: boolean;
+      /** Caminho público da arte, ou null quando ela não existe. */
+      arte: string | null;
     };
     aposta: boolean;
   };
@@ -96,6 +98,7 @@ export function montarDossie(leitura: Leitura, lead: DadosLead): DossiePublico {
         slug: doBanco?.slug ?? '',
         frase_card: doBanco?.frase_card ?? null,
         tem_card: doBanco?.tem_card ?? false,
+        arte: doBanco?.tem_card ? caminhoDoCard(doBanco) : null,
       },
       aposta: leitura.movimento.aposta || leitura.material_fino,
     },

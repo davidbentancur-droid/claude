@@ -34,6 +34,14 @@ export type Resposta = {
   texto: string;
   /** True quando o modelo bateu no teto de tokens antes de fechar. */
   truncou: boolean;
+  /**
+   * True quando um classificador de segurança recusou a requisição.
+   *
+   * Não é erro de rede nem JSON malformado: a resposta vem 200 com o conteúdo
+   * vazio. Sem este campo o engine trataria como parse quebrado e gastaria as
+   * três tentativas repetindo a mesma recusa.
+   */
+  recusou?: boolean;
 };
 
 export interface Provedor {
@@ -45,6 +53,14 @@ export interface Provedor {
 /* ------------------------------------------------------------------ */
 /* Anthropic                                                           */
 /* ------------------------------------------------------------------ */
+
+/**
+ * Pra onde a chamada vai quando o modelo principal recusa.
+ *
+ * Opus 5 e não outro Fable: o fallback existe justamente pra sair do
+ * classificador que recusou, então repetir a mesma família não ajuda.
+ */
+const RESERVA = process.env.ANTHROPIC_MODELO_RESERVA ?? 'claude-opus-5';
 
 class ProvedorAnthropic implements Provedor {
   readonly nome = 'anthropic';
@@ -62,20 +78,49 @@ class ProvedorAnthropic implements Provedor {
      * Streaming em vez de `create()`: a conexão fica viva durante a geração, o
      * que evita timeout de HTTP numa chamada de dezenas de segundos.
      *
-     * O `cache_control` no system é o ganho grande. O Prompt Mãe são mais de dez
-     * mil tokens idênticos em toda leitura, e em cache essa parte da entrada
-     * custa uma fração. O retry reaproveita o mesmo prefixo.
+     * O `cache_control` no system é o ganho grande. O Prompt Mãe e o banco de
+     * mitos são mais de vinte mil tokens idênticos em toda leitura, e em cache
+     * essa parte da entrada custa uma fração. O retry reaproveita o prefixo.
      */
     // `minimal` é degrau da OpenAI e não existe aqui. Sem este piso, trocar o
     // provedor de volta com a mesma env mandaria um valor inválido pra API.
     const esforco = (c.esforco as string) === 'minimal' ? 'low' : c.esforco;
 
+    /**
+     * No Fable e no Mythos o raciocínio é sempre ligado, e **qualquer**
+     * configuração explícita de `thinking` que não seja `adaptive` volta 400.
+     * Inclusive `disabled`. Então lá o parâmetro é omitido em vez de desligado,
+     * e `ENGINE_THINKING=disabled` vira sem efeito em vez de virar erro.
+     */
+    const semDesligar = /fable|mythos/i.test(this.modelo);
+    const thinking: Anthropic.ThinkingConfigParam | undefined = c.pensar
+      ? { type: 'adaptive' }
+      : semDesligar
+        ? undefined
+        : { type: 'disabled' };
+
+    /**
+     * Fallback de recusa, e aqui ele não é enfeite.
+     *
+     * Este quiz recebe gente escrevendo sobre morte, doença, ruptura e
+     * violência sofrida, que é matéria-prima do método e também exatamente o
+     * assunto que faz um classificador de segurança hesitar. Recusa chega 200
+     * com conteúdo vazio, quer dizer, o engine não veria erro nenhum: veria
+     * JSON faltando e queimaria as tentativas. Com o fallback a própria API
+     * refaz a chamada no modelo de reserva e a leitura continua.
+     *
+     * O pré-filtro de risco em `lib/engine/risk.ts` continua sendo a primeira
+     * porta e não muda: quem escreve ideação suicida para o fluxo antes de
+     * chegar aqui e recebe o CVV, não um dossiê.
+     */
     const msg = await this.sdk()
-      .messages.stream({
+      .beta.messages.stream({
         model: this.modelo,
         max_tokens: c.maxTokens,
         output_config: { effort: esforco },
-        thinking: c.pensar ? { type: 'adaptive' } : { type: 'disabled' },
+        ...(thinking ? { thinking } : {}),
+        betas: ['server-side-fallback-2026-06-01'],
+        fallbacks: [{ model: RESERVA }],
         system: [{ type: 'text', text: c.system, cache_control: { type: 'ephemeral' } }],
         messages: c.mensagens,
       })
@@ -83,10 +128,11 @@ class ProvedorAnthropic implements Provedor {
 
     return {
       texto: msg.content
-        .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+        .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === 'text')
         .map((b) => b.text)
         .join(''),
       truncou: msg.stop_reason === 'max_tokens',
+      recusou: msg.stop_reason === 'refusal',
     };
   }
 }

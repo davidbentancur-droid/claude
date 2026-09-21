@@ -5,10 +5,16 @@
  * Movimento pode aparecer em qualquer Ato. O campo `ato` aqui é só o centro de
  * gravidade, serve pra conferência e nunca pra decidir a leitura.
  *
- * `frase_card` e `tem_card` ficam nulos e falsos até a arte oficial chegar
- * (pendência 8 do Prompt Mãe). Enquanto não chegar, o infográfico mostra só o
- * nome do Movimento em tipografia, que é o que o Prompt Mãe manda fazer:
- * "nunca gerar arte nova de card dentro do quiz".
+ * O kit de arte chegou em 21/09, parcial: nove dos vinte Movimentos têm card
+ * ilustrado. `frase_card` é a frase que está **escrita dentro da arte**, copiada
+ * dela, e por isso ela existe nos nove e é null no resto. Ela nunca é escrita
+ * pelo modelo: o componente desenha a partir daqui, o que garante que o texto na
+ * tela e o texto na imagem sejam o mesmo.
+ *
+ * Pra ligar um Movimento novo quando a arte chegar: põe o arquivo em
+ * `public/cards/` com o nome que `arquivoDoCard` devolve, cola a frase da arte
+ * em `frase_card` e vira `tem_card` pra true. O teste `cards` do e2e reprova se
+ * as três coisas saírem de sincronia.
  */
 
 export type Ato = 'Partida' | 'Iniciação' | 'Retorno';
@@ -18,32 +24,50 @@ export type Movimento = {
   nome: string;
   slug: string;
   ato: Ato;
-  /** Frase da arte oficial. Null enquanto o card não existir. */
+  /** A frase escrita dentro da arte, copiada dela. Null sem arte. */
   frase_card: string | null;
-  /** True só quando `public/cards/{slug}.webp` existir de verdade. */
+  /** True só quando o arquivo de `arquivoDoCard` existir de verdade. */
   tem_card: boolean;
 };
 
 export const MOVIMENTOS: readonly Movimento[] = [
-  { numero: 1, nome: 'Chamado', slug: 'chamado', ato: 'Partida', frase_card: null, tem_card: false },
+  { numero: 1, nome: 'Chamado', slug: 'chamado', ato: 'Partida', frase_card:
+      'O chamado não te entrega um destino novo. Ele te avisa que o teu lugar já não te serve.',
+    tem_card: true },
   { numero: 2, nome: 'Recusa', slug: 'recusa', ato: 'Partida', frase_card: null, tem_card: false },
   { numero: 3, nome: 'Rebelião', slug: 'rebeliao', ato: 'Partida', frase_card: null, tem_card: false },
-  { numero: 4, nome: 'Súplica', slug: 'suplica', ato: 'Partida', frase_card: null, tem_card: false },
+  { numero: 4, nome: 'Súplica', slug: 'suplica', ato: 'Partida', frase_card:
+      'Baixar a cabeça não é entregar o comando. É parar de fingir que ele era teu.',
+    tem_card: true },
   { numero: 5, nome: 'Rapto', slug: 'rapto', ato: 'Partida', frase_card: null, tem_card: false },
   { numero: 6, nome: 'Ambição', slug: 'ambicao', ato: 'Partida', frase_card: null, tem_card: false },
   { numero: 7, nome: 'Descida', slug: 'descida', ato: 'Iniciação', frase_card: null, tem_card: false },
-  { numero: 8, nome: 'Naufrágio', slug: 'naufragio', ato: 'Iniciação', frase_card: null, tem_card: false },
-  { numero: 9, nome: 'Prova', slug: 'prova', ato: 'Iniciação', frase_card: null, tem_card: false },
+  { numero: 8, nome: 'Naufrágio', slug: 'naufragio', ato: 'Iniciação', frase_card:
+      'Basta um instante e nada do que te sustentava te sustenta mais.',
+    tem_card: true },
+  { numero: 9, nome: 'Prova', slug: 'prova', ato: 'Iniciação', frase_card:
+      'O teste não diz se tu venceu. Diz do que tu é feito.',
+    tem_card: true },
   { numero: 10, nome: 'Tentação', slug: 'tentacao', ato: 'Iniciação', frase_card: null, tem_card: false },
   { numero: 11, nome: 'Cegueira', slug: 'cegueira', ato: 'Iniciação', frase_card: null, tem_card: false },
   { numero: 12, nome: 'Perda', slug: 'perda', ato: 'Iniciação', frase_card: null, tem_card: false },
   { numero: 13, nome: 'Traição', slug: 'traicao', ato: 'Iniciação', frase_card: null, tem_card: false },
   { numero: 14, nome: 'Confronto Maior', slug: 'confronto-maior', ato: 'Iniciação', frase_card: null, tem_card: false },
-  { numero: 15, nome: 'Encontro com a Deusa', slug: 'encontro-com-a-deusa', ato: 'Iniciação', frase_card: null, tem_card: false },
-  { numero: 16, nome: 'Sacrifício', slug: 'sacrificio', ato: 'Iniciação', frase_card: null, tem_card: false },
-  { numero: 17, nome: 'Perseguição', slug: 'perseguicao', ato: 'Retorno', frase_card: null, tem_card: false },
-  { numero: 18, nome: 'Resgate', slug: 'resgate', ato: 'Retorno', frase_card: null, tem_card: false },
-  { numero: 19, nome: 'Acerto de Contas', slug: 'acerto-de-contas', ato: 'Retorno', frase_card: null, tem_card: false },
+  { numero: 15, nome: 'Encontro com a Deusa', slug: 'encontro-com-a-deusa', ato: 'Iniciação', frase_card:
+      'Não se pega à força, e nem por isso é de graça. Tem que aguentar o que ela revela.',
+    tem_card: true },
+  { numero: 16, nome: 'Sacrifício', slug: 'sacrificio', ato: 'Iniciação', frase_card:
+      'Sacrificar é reconhecer o que vale mais, pagar o preço inteiro e não exigir que o mundo devolva.',
+    tem_card: true },
+  { numero: 17, nome: 'Perseguição', slug: 'perseguicao', ato: 'Retorno', frase_card:
+      'Nada te faz correr assim, a não ser o que tu não pode perder.',
+    tem_card: true },
+  { numero: 18, nome: 'Resgate', slug: 'resgate', ato: 'Retorno', frase_card:
+      'O aprisionamento que só pode ser liberado com ajuda de fora.',
+    tem_card: true },
+  { numero: 19, nome: 'Acerto de Contas', slug: 'acerto-de-contas', ato: 'Retorno', frase_card:
+      'O acerto devolve a cada um o que é seu e tira do passado o poder de continuar cobrando.',
+    tem_card: true },
   { numero: 20, nome: 'Casamento', slug: 'casamento', ato: 'Retorno', frase_card: null, tem_card: false },
 ] as const;
 
@@ -61,6 +85,22 @@ function chave(nome: string): string {
 }
 
 const porNome = new Map(MOVIMENTOS.map((m) => [chave(m.nome), m]));
+
+/**
+ * O nome do arquivo da arte, na convenção do documento de assets de 21/09:
+ * `mov_NN_slug`, com o número em duas casas e o slug com underscore.
+ *
+ * Derivado em vez de guardado à mão porque o par número/slug já existe na
+ * tabela, e duas fontes pro mesmo nome divergem na primeira arte nova.
+ */
+export function arquivoDoCard(m: Movimento): string {
+  const nn = String(m.numero).padStart(2, '0');
+  return `mov_${nn}_${m.slug.replace(/-/g, '_')}.webp`;
+}
+
+export function caminhoDoCard(m: Movimento): string {
+  return `/cards/${arquivoDoCard(m)}`;
+}
 
 export function movimentoPorNumero(numero: number): Movimento | undefined {
   return porNumero.get(numero);

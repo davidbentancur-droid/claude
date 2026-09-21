@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 
 import { Dossie } from '@/components/quiz/Dossie';
 import type { Ato } from '@/lib/movimentos';
-import { movimentoPorNumero } from '@/lib/movimentos';
+import { caminhoDoCard, movimentoPorNumero } from '@/lib/movimentos';
 import type { DossiePublico } from '@/lib/render';
 
 /**
@@ -72,6 +72,7 @@ export default async function Preview({ searchParams }: { searchParams: Busca })
         slug: m.slug,
         frase_card: m.frase_card,
         tem_card: m.tem_card,
+        arte: m.tem_card ? caminhoDoCard(m) : null,
       },
       aposta,
     },

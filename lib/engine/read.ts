@@ -274,6 +274,21 @@ async function rodar<T>(passo: Passo<T>): Promise<Saida<T>> {
       throw new Error('A resposta estourou o limite de tokens antes de fechar o JSON.');
     }
 
+    /*
+     * Recusa do classificador de segurança, já depois do fallback do provedor
+     * ter tentado o modelo de reserva. Quer dizer: a cadeia inteira recusou.
+     *
+     * Sai do laço na hora em vez de tentar de novo. A resposta vem 200 com o
+     * conteúdo vazio, então sem este corte o parse falharia, o retry mandaria
+     * exatamente as mesmas respostas do cara e a recusa se repetiria até
+     * acabar a cota, gastando três chamadas caras pra chegar no mesmo lugar.
+     */
+    if (msg.recusou) {
+      throw new Error(
+        'O provedor recusou a requisição por política de segurança, inclusive no modelo de reserva.',
+      );
+    }
+
     const bruto = msg.texto;
     const cru = tentarExtrair(bruto);
 

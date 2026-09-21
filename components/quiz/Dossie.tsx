@@ -7,6 +7,7 @@ import { RODAPE } from '@/lib/copy';
 import type { DossiePublico } from '@/lib/render';
 import { rastrear } from '@/lib/tracking';
 
+import { CardMovimento } from '../dossie/CardMovimento';
 import { Helice } from '../dossie/Helice';
 import { EspiralArte } from '../dossie/EspiralArte';
 import { Texto } from '../dossie/Texto';
@@ -46,6 +47,15 @@ export function Dossie({ dossie }: { dossie: DossiePublico }) {
           `<path>`.
         */}
         <EspiralArte dados={dossie.infografico} />
+
+        {/*
+          O card do Movimento, logo abaixo da espiral. A Seção 7 pede ele "ao
+          lado", e ficou embaixo: a espiral rompe a coluna e ocupa a largura da
+          tela inteira, então dividir a linha com ela empurraria o card pra uma
+          faixa estreita demais pra prancha de 3:2 se ler. Empilhado, os dois
+          aparecem no tamanho que cada um precisa.
+        */}
+        <CardMovimento dados={dossie.infografico} />
 
         <Bloco bloco={dossie.movimento} />
         <Bloco bloco={dossie.arquetipo} />

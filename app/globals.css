@@ -794,3 +794,119 @@ q.dele {
     opacity: 0.45;
   }
 }
+
+/* ================================================================== */
+/* Card do Movimento. Prompt Mãe Seção 7, Elemento 2.                 */
+/* ================================================================== */
+
+.card-mov {
+  margin: 2rem auto 0;
+  max-width: 560px;
+  width: 100%;
+}
+
+.card-mov__arte {
+  display: block;
+  width: 100%;
+  height: auto;
+  /*
+   * Filete simples de ouro rente à arte. A moldura dupla já está desenhada
+   * dentro do arquivo: repetir ela aqui daria moldura de moldura.
+   */
+  border: 1px solid var(--line-forte);
+}
+
+.card-mov__legenda {
+  font-family: var(--fonte-voice), Georgia, serif;
+  font-style: italic;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--ink-2);
+  text-align: center;
+  margin: 0.85rem auto 0;
+  max-width: 44ch;
+}
+
+.card-mov__aposta {
+  text-align: center;
+  margin-top: 0.6rem;
+}
+
+/* --- o card sem arte, especificação do David de 21/09 --- */
+
+.card-mov--texto {
+  /*
+   * O verde-floresta da especificação. Ele não vem da paleta do Ato de
+   * propósito: é o que faz o card de texto se ler como peça própria em vez de
+   * parecer um card ilustrado que não carregou.
+   */
+  background: #182b22;
+  border: 1px solid var(--partida-a);
+  /* Mesma proporção 3:2 da prancha, pro espaço na página não pular. */
+  aspect-ratio: 3 / 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: clamp(1.25rem, 5vw, 2.5rem);
+}
+
+.card-mov__rotulo {
+  font-family: var(--fonte-body), system-ui, sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--partida-a);
+  margin: 0;
+}
+
+.card-mov__nome {
+  font-family: var(--fonte-display), Georgia, serif;
+  font-size: clamp(1.6rem, 6vw, 2.5rem);
+  line-height: 1.1;
+  color: #f4eee1;
+  margin: 0.6rem 0 0;
+}
+
+.card-mov__filete {
+  display: block;
+  width: 64px;
+  height: 1px;
+  background: var(--partida-a);
+  margin: 24px 0;
+}
+
+.card-mov__frase {
+  font-family: var(--fonte-voice), Georgia, serif;
+  font-style: italic;
+  font-size: clamp(0.95rem, 2.6vw, 1.1rem);
+  line-height: 1.5;
+  color: rgba(244, 238, 225, 0.85);
+  margin: 0;
+  max-width: 34ch;
+}
+
+/*
+ * Sem frase o card fica só com rótulo e nome, e aí o filete some junto. Isso
+ * acontece nos Movimentos que não têm nem arte nem frase aprovada: inventar
+ * frase pra preencher é o que a regra da casa proíbe.
+ */
+
+@media (prefers-reduced-motion: no-preference) {
+  .card-mov__arte,
+  .card-mov--texto {
+    animation: subir-card 0.7s ease-out both;
+  }
+}
+
+@keyframes subir-card {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
