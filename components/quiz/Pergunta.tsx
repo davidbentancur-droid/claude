@@ -8,6 +8,7 @@ import type { NumeroPergunta, Pergunta as DadosPergunta } from '@/lib/copy';
 import { AreaTexto } from '../ui/Campo';
 import { Botao } from '../ui/Botao';
 import { Microfone } from '../ui/Microfone';
+import { useEstreito } from '../ui/useEstreito';
 
 /**
  * Telas 2 a 4. Layout idêntico nas três. Planejamento Seção 1.
@@ -35,6 +36,7 @@ export function Pergunta({
   onEnviar: (envio: Envio) => void;
   ocupado: boolean;
 }) {
+  const estreito = useEstreito();
   const dados = PERGUNTAS.find((p) => p.numero === numero) as DadosPergunta;
   const quantos = dados.campos?.length ?? 1;
 
@@ -80,9 +82,36 @@ export function Pergunta({
           {dados.apoio}
         </p>
 
+        {/*
+          Exemplos abertos no desktop, fechados no celular.
+
+          Medido em 375 px: eles ocupam 198 px e empurravam o campo de escrever
+          pra 693, abaixo da dobra de 812. A pessoa abria a pergunta e não via
+          onde responder. Fechado, o campo sobe pra dentro da primeira tela e o
+          exemplo continua a um toque, com o rótulo dizendo o que tem dentro. A
+          copy do Prompt Mãe não perde nada: ela está toda ali, só não está
+          toda aberta de uma vez.
+        */}
         {dados.exemplos && (
-          <details className="exemplos" open style={{ marginBottom: '1.5rem' }}>
-            <summary>{EXEMPLOS_ROTULO.nao} / {EXEMPLOS_ROTULO.sim}</summary>
+          <details
+            /*
+             * A `key` troca junto com o breakpoint e força remontagem.
+             *
+             * Sem ela o `<details>` fica preso no primeiro estado: `open` é
+             * atributo do DOM, o próprio elemento mexe nele quando abre ou
+             * fecha, e a partir daí o React não reaplica o valor. Medido:
+             * girando do celular pro desktop os exemplos continuavam fechados.
+             * Remontar também devolve o padrão depois que a pessoa mexeu, que
+             * é o comportamento certo quando a largura muda de categoria.
+             */
+            key={estreito ? 'estreito' : 'largo'}
+            className="exemplos"
+            open={!estreito}
+            style={{ marginBottom: '1.5rem' }}
+          >
+            <summary>
+              {EXEMPLOS_ROTULO.nao} / {EXEMPLOS_ROTULO.sim}
+            </summary>
             <div style={{ marginTop: '0.875rem', display: 'grid', gap: '0.75rem' }}>
               <p className="micro" style={{ margin: 0 }}>
                 <span style={{ color: 'var(--ink-2)', opacity: 0.7 }}>
@@ -153,7 +182,10 @@ export function Repescagem({
       <div className="centro">
         <p
           className="corpo"
-          style={{ fontSize: 'clamp(1.125rem, 1rem + 0.6vw, 1.25rem)', margin: '0 0 1.5rem' }}
+          style={{
+            fontSize: 'clamp(1.125rem, 1rem + 0.6vw, 1.25rem)',
+            margin: '0 0 1.5rem',
+          }}
         >
           {REPESCAGEM.texto}
         </p>
@@ -182,7 +214,10 @@ export function Repescagem({
         )}
 
         <div style={{ marginTop: '2rem' }}>
-          <Botao onClick={() => onEnviar(texto.trim())} disabled={texto.trim().length === 0 || ocupado}>
+          <Botao
+            onClick={() => onEnviar(texto.trim())}
+            disabled={texto.trim().length === 0 || ocupado}
+          >
             {REPESCAGEM.botao}
           </Botao>
         </div>

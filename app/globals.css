@@ -787,11 +787,19 @@ q.dele {
     margin-left: auto;
   }
 
+  /*
+   * No celular a espiral sai do fundo e vira ornamento, depois do botão.
+   *
+   * Ela era 560 px centrada por trás do texto, quer dizer, exatamente em cima
+   * dele: o traço cruzava as linhas dos parágrafos e nem o desenho nem o texto
+   * se liam. `position: static` devolve ela pro fluxo, e como ela é o último
+   * filho do `main`, cai embaixo de tudo sem esbarrar em nada.
+   */
   .espiral-fundo {
-    right: 50%;
-    top: 54%;
-    transform: translate(50%, -50%);
-    opacity: 0.45;
+    position: static;
+    transform: none;
+    margin: clamp(2.5rem, 9vw, 3.5rem) auto 0;
+    opacity: 0.55;
   }
 }
 
@@ -1201,4 +1209,106 @@ q.dele {
   margin-top: 3rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--line);
+}
+
+
+/* ================================================================== */
+/* Tela 1. O ritmo da abertura, refeito pro celular em 21/09.         */
+/* ================================================================== */
+
+.abertura {
+  /*
+   * Coluna, pra espiral cair depois do texto no celular. No desktop ela é
+   * absoluta e sai do fluxo, então a direção aqui não a afeta.
+   */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.abertura-texto {
+  width: 100%;
+}
+
+.abertura__titulo {
+  /*
+   * Entrelinha curta e tamanho grande. Título de venda em três linhas com
+   * entrelinha folgada ocupa meia tela de celular sozinho, e é o que fazia a
+   * promessa e o corpo caírem abaixo da dobra.
+   */
+  font-size: clamp(1.7rem, 7.2vw, 2.6rem);
+  line-height: 1.12;
+  letter-spacing: -0.005em;
+  margin: 0 0 0.9rem;
+  text-wrap: balance;
+}
+
+.abertura__promessa {
+  font-family: var(--fonte-voice), Georgia, serif;
+  font-style: italic;
+  font-size: clamp(1.02rem, 4vw, 1.25rem);
+  line-height: 1.45;
+  color: var(--gold);
+  margin: 0;
+  text-wrap: pretty;
+}
+
+/* O filete duplo da casa. Separa sem gastar linha de texto. */
+.abertura__filete {
+  display: block;
+  width: 52px;
+  height: 3px;
+  margin: clamp(1.4rem, 5vw, 1.9rem) 0;
+  border-top: 1px solid var(--gold);
+  border-bottom: 1px solid var(--gold-2);
+}
+
+.abertura__qualificador,
+.abertura__ganho {
+  font-size: clamp(0.95rem, 3.7vw, 1.02rem);
+  line-height: 1.62;
+  margin: 0;
+  text-wrap: pretty;
+}
+
+/*
+ * Os dois parágrafos em tons diferentes. O primeiro diz pra quem é, e é
+ * triagem; o segundo diz o que ele leva, e é o que faz começar. Em tom igual a
+ * tela vira um bloco só de texto, que foi a reclamação.
+ */
+.abertura__qualificador {
+  color: var(--ink-2);
+  margin-bottom: 1em;
+}
+
+.abertura__ganho {
+  color: var(--ink);
+}
+
+.abertura__acao {
+  margin-top: clamp(1.8rem, 6vw, 2.5rem);
+}
+
+.abertura__rodape {
+  margin-top: 1rem;
+}
+
+@media (max-width: 760px) {
+  .abertura {
+    /*
+     * No celular o conteúdo começa do topo em vez de centralizar. Centralizado,
+     * uma tela com título, promessa, dois parágrafos e botão empurra o botão
+     * pra fora da dobra em aparelho pequeno.
+     */
+    justify-content: flex-start;
+    padding-top: clamp(2rem, 9vh, 3.5rem);
+  }
+
+  .abertura__acao {
+    /* O botão ocupa a largura no celular: alvo de toque maior e leitura óbvia. */
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
 }

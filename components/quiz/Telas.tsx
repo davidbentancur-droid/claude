@@ -6,6 +6,7 @@ import { ABERTURA, ENQUADRAMENTO, ERRO, LENDO, PIADA, RISCO, SPOILER } from '@/l
 
 import { Helice } from '../dossie/Helice';
 import { Botao } from '../ui/Botao';
+import { useEstreito } from '../ui/useEstreito';
 
 /* ------------------------------------------------------------------ *
  * Tela 1 · A oferta. Prompt Mãe Seção 2.
@@ -17,42 +18,52 @@ import { Botao } from '../ui/Botao';
 
 export function Abertura({ onComecar }: { onComecar: () => void }) {
   const [qualificador, promessa] = ABERTURA.paragrafos;
+  const estreito = useEstreito();
 
   return (
-    <main className="palco palco-relativo tela">
-      {/*
-        A espiral em profundidade, girando devagar demais pra alguém reparar que
-        gira. O círculo de traço fica reservado pro infográfico, que é onde ele
-        precisa impressionar.
-      */}
-      <Helice className="espiral-fundo" largura={560} voltas={4} opacidade={0.62} />
-
+    <main className="palco palco-relativo tela abertura">
       <div className="centro acima-do-fundo abertura-texto">
         {/*
           O heading de venda é o h1 desde 18/09. Antes o h1 era a promessa
           curta, que agora desce um degrau e vira a linha em voz, logo abaixo.
         */}
-        <h1 className="display pergunta" style={{ marginBottom: '1rem' }}>
-          {ABERTURA.heading}
-        </h1>
-        <p className="subtitulo" style={{ margin: '0 0 2rem' }}>
+        <h1 className="display abertura__titulo">{ABERTURA.heading}</h1>
+
+        <p className="abertura__promessa">
           {ABERTURA.titulo} {ABERTURA.linha}
         </p>
 
-        <p className="corpo" style={{ color: 'var(--ink-2)', margin: '0 0 1.1em' }}>
-          {qualificador}
-        </p>
-        <p className="corpo" style={{ margin: '0 0 2.5rem' }}>
-          {promessa}
-        </p>
+        {/*
+          O filete duplo da casa, a mesma moldura que a Seção 7 pede nos cards.
+          É ele que separa a promessa do corpo sem gastar uma linha de texto,
+          que é o que a tela não tem sobrando.
+        */}
+        <span className="abertura__filete" aria-hidden="true" />
 
-        <div>
+        <p className="corpo abertura__qualificador">{qualificador}</p>
+        <p className="corpo abertura__ganho">{promessa}</p>
+
+        <div className="abertura__acao">
           <Botao onClick={onComecar}>{ABERTURA.botao}</Botao>
+          <p className="micro abertura__rodape">{ABERTURA.rodape}</p>
         </div>
-        <p className="micro" style={{ marginTop: '1.25rem' }}>
-          {ABERTURA.rodape}
-        </p>
       </div>
+
+      {/*
+        A espiral depois do botão, e não atrás do texto.
+        
+        No celular ela era 560 px centrada por trás dos parágrafos, quer dizer,
+        exatamente em cima deles: o traço cruzava as linhas e nem o texto nem o
+        desenho se liam. Aqui embaixo ela vira o que sempre devia ter sido, um
+        detalhe que fecha a tela. No desktop sobra largura à direita e ela volta
+        pro fundo, que é onde funciona.
+      */}
+      <Helice
+        className="espiral-fundo"
+        largura={estreito ? 190 : 560}
+        voltas={4}
+        opacidade={estreito ? 0.5 : 0.62}
+      />
     </main>
   );
 }
@@ -79,10 +90,15 @@ export function Enquadramento({ onSeguir }: { onSeguir: () => void }) {
       <div className="centro">
         <p
           className="corpo"
-          style={{ fontSize: 'clamp(1.125rem, 1rem + 0.6vw, 1.25rem)', margin: '0 0 1.25em' }}
+          style={{
+            fontSize: 'clamp(1.125rem, 1rem + 0.6vw, 1.25rem)',
+            margin: '0 0 1.25em',
+          }}
         >
           {antes}
-          <em style={{ fontStyle: 'normal', color: 'var(--gold)' }}>{ENQUADRAMENTO.enfase}</em>
+          <em style={{ fontStyle: 'normal', color: 'var(--gold)' }}>
+            {ENQUADRAMENTO.enfase}
+          </em>
           {depois}
         </p>
 
@@ -114,7 +130,10 @@ export function Lendo() {
   const [i, setI] = useState(0);
 
   useEffect(() => {
-    const t = setInterval(() => setI((n) => (n + 1) % LENDO.frases.length), LENDO.intervaloMs);
+    const t = setInterval(
+      () => setI((n) => (n + 1) % LENDO.frases.length),
+      LENDO.intervaloMs,
+    );
     return () => clearInterval(t);
   }, []);
 
@@ -127,7 +146,11 @@ export function Lendo() {
         */}
         <Helice largura={300} voltas={3.4} opacidade={0.8} velocidade={0.34} />
 
-        <p className="micro" aria-live="polite" style={{ marginTop: '2rem', minHeight: '1.5em' }}>
+        <p
+          className="micro"
+          aria-live="polite"
+          style={{ marginTop: '2rem', minHeight: '1.5em' }}
+        >
           {LENDO.frases[i]}
         </p>
       </div>
@@ -181,7 +204,10 @@ export function Risco({ texto }: { texto: string }) {
       <div className="centro">
         <p
           className="corpo"
-          style={{ fontSize: 'clamp(1.125rem, 1rem + 0.6vw, 1.25rem)', margin: '0 0 1.75rem' }}
+          style={{
+            fontSize: 'clamp(1.125rem, 1rem + 0.6vw, 1.25rem)',
+            margin: '0 0 1.75rem',
+          }}
         >
           {texto || RISCO.fallback}
         </p>
@@ -215,7 +241,10 @@ export function Piada({ texto, onRefazer }: { texto: string; onRefazer: () => vo
       <div className="centro">
         <p
           className="corpo"
-          style={{ fontSize: 'clamp(1.125rem, 1rem + 0.6vw, 1.25rem)', margin: '0 0 2.5rem' }}
+          style={{
+            fontSize: 'clamp(1.125rem, 1rem + 0.6vw, 1.25rem)',
+            margin: '0 0 2.5rem',
+          }}
         >
           {texto || PIADA.fallback}
         </p>
