@@ -1095,3 +1095,65 @@ q.dele {
     display: none;
   }
 }
+
+/* ================================================================== */
+/* O sigilo. Desenho de linha pro card sem arte.                      */
+/* ================================================================== */
+
+.sigilo {
+  display: block;
+  width: clamp(88px, 22%, 130px);
+  height: auto;
+  margin-bottom: clamp(0.9rem, 3vw, 1.4rem);
+  color: var(--partida-a);
+  overflow: visible;
+}
+
+.sigilo__traco {
+  fill: none;
+  stroke: currentColor;
+  /*
+   * `vector-effect` mantém a espessura igual em qualquer tamanho do card. Sem
+   * ele o traço engrossa junto com o SVG e o desenho vira borrão no desktop.
+   */
+  vector-effect: non-scaling-stroke;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.9;
+}
+
+/*
+ * A linha sendo desenhada. `pathLength` não é declarado, então o dash usa
+ * unidades de usuário: 400 cobre com folga o caminho mais longo do conjunto,
+ * e sobra não aparece porque o traço já terminou de entrar.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .sigilo__traco {
+    stroke-dasharray: 400;
+    stroke-dashoffset: 400;
+    animation:
+      inscrever 1.7s cubic-bezier(0.33, 0, 0.2, 1) forwards,
+      respirar-sigilo 6s ease-in-out 2.4s infinite;
+  }
+}
+
+@keyframes inscrever {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/*
+ * Depois de inscrito, a tinta respira de leve. Sem isso o sigilo desenha e
+ * morre, e o card volta a parecer estático logo depois de chamar atenção.
+ */
+@keyframes respirar-sigilo {
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.62;
+  }
+}

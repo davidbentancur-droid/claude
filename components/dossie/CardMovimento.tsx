@@ -3,6 +3,8 @@ import Image from 'next/image';
 import { INFOGRAFICO } from '@/lib/copy';
 import type { DossiePublico } from '@/lib/render';
 
+import { Sigilo, temSigilo } from './Sigilo';
+
 /**
  * O card do Movimento. Prompt Mãe Seção 7, Elemento 2.
  *
@@ -53,6 +55,14 @@ export function CardMovimento({ dados }: { dados: Dados }) {
 
   return (
     <figure className="card-mov card-mov--texto">
+      {/*
+        O sigilo entra no lugar da prancha enquanto ela não existe. É desenho,
+        não texto: a frase continua ausente nesses Movimentos porque ela não
+        foi aprovada em lugar nenhum, e inventar frase de card é o que a regra
+        da casa proíbe.
+      */}
+      {temSigilo(m.numero) && <Sigilo movimento={m.numero} nome={m.nome} />}
+
       <p className="card-mov__rotulo">Movimento {m.numero}</p>
       <p className="card-mov__nome">{m.nome}</p>
       {m.frase_card && (
