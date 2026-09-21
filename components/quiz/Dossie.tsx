@@ -8,6 +8,7 @@ import type { DossiePublico } from '@/lib/render';
 import { rastrear } from '@/lib/tracking';
 
 import { CardMovimento } from '../dossie/CardMovimento';
+import { FaixaDoAto } from '../dossie/FaixaDoAto';
 import { Helice } from '../dossie/Helice';
 import { EspiralArte } from '../dossie/EspiralArte';
 import { Texto } from '../dossie/Texto';
@@ -37,6 +38,13 @@ export function Dossie({ dossie }: { dossie: DossiePublico }) {
         <section style={{ marginBottom: '2.25rem' }}>
           <Texto valor={dossie.devolutiva} />
         </section>
+
+        {/*
+          A pintura do Ato abrindo o bloco, de ponta a ponta. É o gesto das
+          duas referências que o Adriano aprovou: arte de época na largura
+          inteira, com o nome assentado nela.
+        */}
+        <FaixaDoAto ato={dossie.infografico.ato} posicao={dossie.infografico.posicao} />
 
         <Bloco bloco={dossie.ato} />
 

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Archivo, Cormorant_Garamond, Instrument_Serif } from 'next/font/google';
+import { Cormorant_Garamond, IBM_Plex_Serif, IM_Fell_English } from 'next/font/google';
 import Script from 'next/script';
 
 import { gtmId, metaPixelId, temGtm, temPixel } from '@/lib/public-env';
@@ -10,25 +10,42 @@ import './globals.css';
  * As três fontes do sistema Mitobiografia. `next/font/google` baixa em tempo de
  * build e serve da nossa origem, o que mantém `font-src 'self'` no CSP e evita
  * o flash de fonte trocando.
+ *
+ * Trocadas em 21/09 contra as referências que o Adriano aprovou. Duas
+ * mudanças, e a segunda é a que vira a página:
+ *
+ * **IM Fell English** no lugar da Cormorant nos títulos. É um tipo de prensa
+ * do século XVII, com a irregularidade da tinta no papel, e é ele que casa com
+ * os cards iluminados do kit. A Cormorant é uma serifa de revista: bonita e do
+ * século errado.
+ *
+ * **IBM Plex Serif** no lugar da Archivo no corpo. Era sans, e sans é o que
+ * fazia a página parecer produto de software em vez de peça impressa. Nas duas
+ * referências não existe sans em lugar nenhum do conteúdo.
+ *
+ * A Cormorant fica, em itálico, pra legenda de card e fala citada: ela tem um
+ * itálico que a IM Fell não tem.
  */
-const display = Cormorant_Garamond({
+const display = IM_Fell_English({
   subsets: ['latin'],
-  weight: ['500'],
+  weight: ['400'],
+  style: ['normal', 'italic'],
   variable: '--fonte-display',
   display: 'swap',
 });
 
-const voice = Instrument_Serif({
+const voice = Cormorant_Garamond({
   subsets: ['latin'],
-  weight: ['400'],
+  weight: ['400', '500'],
   style: ['normal', 'italic'],
   variable: '--fonte-voice',
   display: 'swap',
 });
 
-const body = Archivo({
+const body = IBM_Plex_Serif({
   subsets: ['latin'],
   weight: ['400', '500'],
+  style: ['normal', 'italic'],
   variable: '--fonte-body',
   display: 'swap',
 });

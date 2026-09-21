@@ -24,7 +24,13 @@
   --painel-queda: #c0625e;
   --painel-ok: #8fae87;
 
-  font-family: var(--fonte-body), system-ui, sans-serif;
+  /*
+   * Sans explícita, não `--fonte-body`.
+   *
+   * Em 21/09 o corpo do site virou serifa, e serifa numa tela de trabalho que
+   * fica aberta o dia inteiro cansa. O painel é ferramenta, não peça impressa.
+   */
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 /* Serifa: só título e número grande. */

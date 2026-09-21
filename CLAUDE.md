@@ -54,6 +54,22 @@ Três coisas que valem saber antes de mexer nele:
 
 A qualificação sai de `orcamento_faixa`, que o `classificarOrcamento` já gravava: centenas e milhares contam como qualificado, dezenas não, e `indefinido` vira "ler o texto" em vez de virar veredito. O Prompt Mãe Seção 4.2 avisa que "o verbo importa mais que a cifra", então o campo cru aparece inteiro no card.
 
+## O visual, e as referências que mandam nele
+
+Refeito em 21/09 contra dois sites que o Adriano aprovou, principalmente [schoolofmythopoetics.com](https://www.schoolofmythopoetics.com/). O que foi extraído de lá e aplicado:
+
+**Tipografia, e é ela que vira a página.** Títulos em **IM Fell English**, um tipo de prensa do século XVII com a irregularidade da tinta no papel, que é o que casa com os cards iluminados do kit. Corpo em **IBM Plex Serif**. O corpo era Archivo, uma sans, e era a sans que fazia a página parecer produto de software em vez de peça impressa: nas duas referências não existe sans em lugar nenhum do conteúdo. A Cormorant ficou no `--fonte-voice`, em itálico, pra legenda de card e fala citada, porque a IM Fell não tem itálico.
+
+O painel é a exceção e usa sans de sistema explícita. Serifa numa tela de trabalho que fica aberta o dia inteiro cansa.
+
+**Arte de época em faixa full-bleed.** `components/dossie/FaixaDoAto.tsx` põe a pintura do Ato de ponta a ponta, com o nome assentado direto nela, sem caixa e sem moldura. É o gesto central das duas referências. As três pinturas são de escolas diferentes de propósito (mosaico tardo-antigo, óleo romântico, ilustração de conto), e a veladura da cor do Ato por cima é o que costura três séculos na mesma página.
+
+**Todo escurecimento é CSS, nunca o arquivo.** Vale pras pinturas de Ato e pro loop de vídeo. Duas razões: a mesma peça precisa servir de fundo num lugar e de imagem inteira em outro, e escurecer no arquivo obrigaria a manter duas cópias que divergem na primeira troca de arte.
+
+**A rampa.** `.rampa` é a virada do dossiê pra oferta, com `video_loop_fundo.mp4` cobrindo o fundo, mudo, em loop e `playsInline`. Sem o `playsInline` o iPhone abre o vídeo em tela cheia sozinho, e um fundo decorativo sequestraria a tela no meio da leitura.
+
+**Rolagem horizontal: `overflow-x: clip` no `.palco`.** As faixas full-bleed usam `100vw`, que inclui a barra de rolagem e abre uns 8 px de rolagem lateral. No `body` o clip não resolve, porque o body propaga o overflow dele pro viewport quando o html está `visible`. Num elemento comum no meio da árvore, corta.
+
 ## O provedor do modelo
 
 `ENGINE_PROVIDER` escolhe entre `openai` (hoje em produção, `gpt-5`) e `anthropic`. O engine inteiro é agnóstico: contrato, schema, validador e fixtures rodam igual nos dois, então comparar é rodar a mesma fixture duas vezes.

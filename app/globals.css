@@ -910,3 +910,188 @@ q.dele {
     transform: none;
   }
 }
+
+/* ================================================================== */
+/* A faixa do Ato. Pintura de ponta a ponta, texto assentado nela.    */
+/* ================================================================== */
+
+/*
+ * A tesoura que segura a faixa.
+ *
+ * `100vw` inclui a barra de rolagem, então a faixa fica uns 8 px mais larga
+ * que a área visível e abre rolagem horizontal na página inteira. Foi o que
+ * aconteceu com a espiral, e lá a saída foi medir `clientWidth` em JS.
+ *
+ * Aqui dá pra resolver em CSS: `overflow-x: clip` no `.palco`, que é o
+ * elemento de fora do dossiê. No `body` não funciona, porque o body propaga o
+ * overflow dele pro viewport quando o html está `visible`, e aí não corta
+ * nada. Num elemento comum no meio da árvore, corta.
+ */
+.palco {
+  overflow-x: clip;
+}
+
+.faixa-ato {
+  position: relative;
+  width: 100vw;
+  max-width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  margin-block: clamp(2.5rem, 7vw, 4.5rem);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.faixa-ato__arte {
+  display: block;
+  width: 100%;
+  height: clamp(300px, 52vh, 520px);
+  object-fit: cover;
+  /*
+   * A veladura e o escurecimento, os dois em CSS. O arquivo nunca é tratado:
+   * a mesma pintura serve de fundo aqui e pode aparecer inteira em outro lugar.
+   */
+  filter: saturate(0.82) contrast(1.02);
+}
+
+.faixa-ato::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg) 78%, transparent) 0%,
+      color-mix(in srgb, var(--bg) 22%, transparent) 38%,
+      color-mix(in srgb, var(--bg) 88%, transparent) 100%
+    ),
+    color-mix(in srgb, var(--veladura) 16%, transparent);
+}
+
+.faixa-ato__texto {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: clamp(1.5rem, 4vw, 2.75rem);
+  transform: translateX(-50%);
+  width: min(var(--leitura), calc(100% - 2.5rem));
+}
+
+.faixa-ato__rotulo {
+  font-family: var(--fonte-body), Georgia, serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 0 0 0.5rem;
+}
+
+.faixa-ato__nome {
+  font-family: var(--fonte-display), Georgia, serif;
+  font-size: clamp(2.4rem, 9vw, 4.25rem);
+  line-height: 0.95;
+  color: var(--ink);
+  margin: 0;
+  /*
+   * Sombra e não caixa. A referência assenta o texto direto na pintura, e uma
+   * caixa por trás quebraria isso; a sombra só garante leitura onde a tinta
+   * clareia.
+   */
+  text-shadow: 0 2px 24px rgba(10, 8, 6, 0.85);
+}
+
+.faixa-ato__posicao {
+  font-family: var(--fonte-voice), Georgia, serif;
+  font-style: italic;
+  font-size: clamp(1rem, 3.2vw, 1.35rem);
+  color: var(--gold);
+  margin: 0.2rem 0 0;
+  text-shadow: 0 1px 16px rgba(10, 8, 6, 0.9);
+}
+
+.faixa-ato__descricao {
+  font-family: var(--fonte-body), Georgia, serif;
+  font-size: clamp(0.86rem, 2.4vw, 0.98rem);
+  line-height: 1.6;
+  color: var(--ink);
+  margin: 0.9rem 0 0;
+  max-width: 46ch;
+  text-shadow: 0 1px 18px rgba(10, 8, 6, 0.95);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .faixa-ato__texto > * {
+    animation: subir-card 0.8s ease-out both;
+  }
+  .faixa-ato__nome { animation-delay: 0.08s; }
+  .faixa-ato__posicao { animation-delay: 0.16s; }
+  .faixa-ato__descricao { animation-delay: 0.24s; }
+}
+
+/* ================================================================== */
+/* A rampa. A virada do dossiê pra oferta, com o loop de fundo.       */
+/* ================================================================== */
+
+.rampa {
+  position: relative;
+  width: 100vw;
+  max-width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  margin-top: clamp(3rem, 8vw, 5rem);
+  padding: clamp(2.5rem, 7vw, 4.5rem) 1.25rem clamp(2.5rem, 7vw, 4rem);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/*
+ * O vídeo cobre a rampa inteira e fica atrás de tudo. `object-fit: cover`
+ * porque a proporção da rampa muda com o conteúdo e o vídeo é 16:9 fixo:
+ * deixar ele esticar distorceria as pessoas filmadas.
+ */
+.rampa__fundo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/*
+ * O véu. Escurecimento em CSS, nunca no arquivo, que é a mesma regra das
+ * artes de Ato. Sem ele o texto branco some nos quadros claros do loop, e
+ * escurecer o arquivo obrigaria a manter duas cópias do vídeo.
+ */
+.rampa__veu {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      var(--bg) 0%,
+      color-mix(in srgb, var(--bg) 72%, transparent) 18%,
+      color-mix(in srgb, var(--bg) 66%, transparent) 72%,
+      var(--bg) 100%
+    );
+}
+
+.rampa__conteudo {
+  position: relative;
+  z-index: 2;
+  width: min(var(--leitura), 100%);
+  margin-inline: auto;
+}
+
+/*
+ * Sem vídeo, a rampa vira só uma faixa escura e nada quebra. Vale pro
+ * ambiente em que o arquivo ainda não subiu e pra quem bloqueia mídia.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .rampa__fundo {
+    display: none;
+  }
+}
