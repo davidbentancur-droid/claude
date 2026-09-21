@@ -167,26 +167,28 @@ class ProvedorAnthropic implements Provedor {
 /* OpenAI                                                              */
 /* ------------------------------------------------------------------ */
 
-type EsforcoOpenAI = 'minimal' | 'low' | 'medium' | 'high';
+type EsforcoOpenAI = 'minimal' | 'low' | 'medium' | 'high' | 'xhigh';
 
 /**
  * Nos modelos de raciocínio da OpenAI `temperature` é rejeitado e o controle é
- * `reasoning_effort`, que vai de `minimal` a `high`. O mapa achata `xhigh` e
- * `max` no topo, e `ENGINE_EFFORT=minimal` alcança o degrau mais baixo, que não
- * tem equivalente do lado da Anthropic.
+ * `reasoning_effort`. A escada mudou de geração pra geração, e as duas pontas
+ * dela são específicas de modelo: o `gpt-5` aceita `minimal` e não aceita
+ * `xhigh`, o `gpt-6-astra` faz o contrário e devolve 400 pro `minimal`.
+ *
+ * O mapa recebe o esforço **da chamada**, não lê env var.
+ *
+ * Isso é conserto de bug, não estilo. A versão anterior lia `ENGINE_EFFORT`
+ * aqui dentro e devolvia `minimal` pra qualquer chamada quando essa variável
+ * estava em `minimal`, que é o caso da produção. Resultado: a chamada 2 rodava
+ * em `minimal` desde sempre e o `ENGINE_EFFORT_DOSSIE=medium` não valia nada.
  */
-const ESFORCO_OPENAI: Record<Esforco, EsforcoOpenAI> = {
-  low: 'low',
-  medium: 'medium',
-  high: 'high',
-  xhigh: 'high',
-  max: 'high',
-};
+function esforcoOpenAI(e: Esforco | 'minimal', modelo: string): EsforcoOpenAI {
+  const semMinimal = /gpt-6|astra/i.test(modelo);
+  const comXhigh = semMinimal;
 
-function esforcoOpenAI(e: Esforco): EsforcoOpenAI {
-  const bruto = process.env.ENGINE_EFFORT;
-  if (bruto === 'minimal') return 'minimal';
-  return ESFORCO_OPENAI[e];
+  if (e === 'minimal') return semMinimal ? 'low' : 'minimal';
+  if (e === 'xhigh' || e === 'max') return comXhigh ? 'xhigh' : 'high';
+  return e;
 }
 
 class ProvedorOpenAI implements Provedor {
@@ -206,7 +208,7 @@ class ProvedorOpenAI implements Provedor {
     const r = await this.sdk().chat.completions.create({
       model: this.modelo,
       max_completion_tokens: c.maxTokens,
-      reasoning_effort: esforcoOpenAI(c.esforco),
+      reasoning_effort: esforcoOpenAI(c.esforco, this.modelo),
       response_format: c.json ? { type: 'json_object' } : { type: 'text' },
       messages: [
         { role: 'system', content: c.system },
