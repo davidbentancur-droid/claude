@@ -1,4 +1,7 @@
+import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
+
+import { COOKIE_PAINEL, senhaDoPainel, tokenValido } from '@/lib/painel/sessao';
 
 import { Dossie } from '@/components/quiz/Dossie';
 import type { Ato } from '@/lib/movimentos';
@@ -39,12 +42,28 @@ const TEXTO = {
 
 type Busca = Promise<Record<string, string | string[] | undefined>>;
 
+/* Lê cookie, então nunca é estática. */
+export const dynamic = 'force-dynamic';
+
 export default async function Preview({ searchParams }: { searchParams: Busca }) {
-  // `VERCEL_ENV` é 'production', 'preview' ou 'development'. Localmente ela não
-  // existe, e aí o NODE_ENV decide. Assim a rota vive no dev e no deploy de
-  // preview, e some só no que está no ar pra valer.
+  /*
+   * Em produção a rota existe, mas só pra quem tem a senha do painel.
+   *
+   * Ela respondia 404 e isso virou problema em 21/09: revisar as artes dos
+   * vinte Movimentos exigia preencher o quiz vinte vezes e torcer pra cair no
+   * Movimento certo, o que é inviável. O risco que o 404 protegia era outro,
+   * o dossiê de referência do Anexo 11.5 vazar como se fosse leitura de
+   * alguém, e a senha protege disso do mesmo jeito.
+   *
+   * Sem `PAINEL_SENHA` configurada, volta a ser 404: falha fechada.
+   */
   const ambiente = process.env.VERCEL_ENV ?? process.env.NODE_ENV;
-  if (ambiente === 'production') notFound();
+  if (ambiente === 'production') {
+    const senha = senhaDoPainel();
+    const autorizado =
+      senha !== null && (await tokenValido((await cookies()).get(COOKIE_PAINEL)?.value, senha));
+    if (!autorizado) notFound();
+  }
 
   const q = await searchParams;
   const um = (k: string) => (Array.isArray(q[k]) ? q[k][0] : q[k]);
